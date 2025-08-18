@@ -1,30 +1,27 @@
 <html>
-  <head>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
-  </head>
-  <body style="margin: 0; overflow: hidden;">
-    <a-scene
-      embedded
-      vr-mode-ui="enabled: false"
-      arjs="sourceType: webcam; debugUIEnabled: false;">
-      
-      <!-- Camera -->
-      <a-entity camera></a-entity>
+  <head>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene
+      embedded
+      vr-mode-ui="enabled: false"
+      arjs="sourceType: webcam; debugUIEnabled: false;">
+      
+            <a-entity camera>
+                <a-image
+          src="https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/5.png"
+          position="0 0 -2"
+          scale="5 5 5"
+          rotation="-90 0 0">
+        </a-image>
 
-      <!-- Fixed image 2m in front, on the floor -->
-      <a-image
-        src="https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/5.png"
-        position="0 0 -2"
-        scale="5 5 5"
-        rotation="-90 0 0">
-      </a-image>
+                <a-entity position="0 1 -2">
+          <a-text value="👀" color="yellow" align="center"></a-text>
+        </a-entity>
+      </a-entity>
 
-      <!-- Emoji above it -->
-      <a-entity position="0 1 -2">
-        <a-text value="👀" color="yellow" align="center"></a-text>
-      </a-entity>
-
-    </a-scene>
-  </body>
+    </a-scene>
+  </body>
 </html>
