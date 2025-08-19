@@ -8,7 +8,7 @@
 
     .glass-panel {
       position: absolute;
-      bottom: 100px; /* Adjusted from 20px to make it visible */
+      top: 20px; /* Adjusted to guarantee visibility */
       left: 50%;
       transform: translateX(-50%);
       width: 65%;
@@ -105,6 +105,7 @@
     let currentLink = null;
     let isSpeaking = false;
     let isListening = false;
+    let hasGreetedOnTouch = false;
     let recognition = null;
     const micBtn = document.getElementById('micBtn');
 
@@ -133,12 +134,26 @@
       speechSynthesis.speak(msg);
     }
 
-    // Boot-up greeting
+    // Boot-up greeting (initial load)
     window.addEventListener('load', () => {
       setTimeout(() => {
         speak("Hello, I’m Tiffy. I’m listening… Which world shall we visit?");
       }, 2000);
     });
+    
+    // New touch/click greeting
+    document.body.addEventListener('touchstart', function() {
+      if (!hasGreetedOnTouch) {
+        speak("Hi, ask me anything");
+        hasGreetedOnTouch = true;
+      }
+    }, {once: true});
+    document.body.addEventListener('mousedown', function() {
+      if (!hasGreetedOnTouch) {
+        speak("Hi, ask me anything");
+        hasGreetedOnTouch = true;
+      }
+    }, {once: true});
 
     // Handle send message
     function sendMessage() {
