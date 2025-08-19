@@ -11,7 +11,7 @@
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      width: 65%;
+      width: 70%;
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.3);
       backdrop-filter: blur(10px);
@@ -20,9 +20,14 @@
       color: white;
       font-family: sans-serif;
       display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 9999;
+    }
+    .input-row {
+      display: flex;
       gap: 10px;
       align-items: center;
-      z-index: 9999; /* keeps panel above AR/VR buttons */
     }
     input {
       flex: 1;
@@ -39,6 +44,15 @@
       border-radius: 8px;
       color: white;
       cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background: rgba(255,255,255,0.5);
+    }
+    .keyword-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
   </style>
 </head>
@@ -56,52 +70,70 @@
 
   <!-- Glass interface -->
   <div class="glass-panel">
-    <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
-    <button onclick="sendMessage()">Send</button>
-    <button onclick="startMic()">🎤</button>
+    <div class="input-row">
+      <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
+      <button onclick="sendMessage()">Send</button>
+      <button onclick="startMic()">🎤</button>
+    </div>
+    <div class="keyword-buttons" id="keywordButtons"></div>
   </div>
 
   <script>
-    // Keyword dictionary with unique responses
+    // Keyword dictionary with URL + response + link
     const backgrounds = {
       "tetris": {
         url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
-        response: "Stacking blocks… welcome to the Tetris world!"
+        response: "Stacking blocks… welcome to the Tetris world!",
+        link: "https://tetris.com/play-tetris"
       },
-      "Snake": {
+      "snake": {
         url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/play.mp4",
-        response: "Drifting into the jungle parts… your adventure begins."
+        response: "Drifting into the jungle parts… your adventure begins.",
+        link: "https://playsnake.org/"
       },
-      "Shoot": {
+      "shoot": {
         url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
-        response: "ready aim fire."
+        response: "Ready, aim… fire!",
+        link: "https://example.com/shoot-game"
       }
-      // "keyword": { url: "video_url", response: "custom phrase" }
+      // Add more keywords here!
     };
+
+    // Generate menu buttons dynamically
+    function buildMenu() {
+      const container = document.getElementById("keywordButtons");
+      for (let keyword in backgrounds) {
+        const btn = document.createElement("button");
+        btn.innerText = keyword.charAt(0).toUpperCase() + keyword.slice(1);
+        btn.onclick = () => window.open(backgrounds[keyword].link, "_blank");
+        container.appendChild(btn);
+      }
+    }
 
     // Text-to-speech
     function speak(text) {
+      if (!window.speechSynthesis) return;
       let msg = new SpeechSynthesisUtterance(text);
       msg.rate = 1; msg.pitch = 1;
+      window.speechSynthesis.cancel(); // clear previous queue
       window.speechSynthesis.speak(msg);
     }
 
     // Handle send message
     function sendMessage() {
-      let msg = document.getElementById('messageBox').value;
+      let msg = document.getElementById('messageBox').value.toLowerCase();
       if (!msg) return;
       console.log("User:", msg);
 
       let found = false;
       for (let keyword in backgrounds) {
-        if (msg.toLowerCase().includes(keyword)) {
+        if (msg.includes(keyword)) {
           swapBackground(backgrounds[keyword].url);
           speak(backgrounds[keyword].response);
           found = true;
           break;
         }
       }
-
       if (!found) {
         speak("I heard you say " + msg);
       }
@@ -131,6 +163,9 @@
         sendMessage();
       }
     }
+
+    // Build menu on load
+    buildMenu();
   </script>
 </body>
 </html>
