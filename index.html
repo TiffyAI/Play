@@ -49,10 +49,19 @@
     button:hover {
       background: rgba(255,255,255,0.5);
     }
-    .keyword-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+    /* Popup button */
+    .popup-btn {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      opacity: 0;
+      transition: all 0.4s ease;
+      z-index: 10000;
+    }
+    .popup-btn.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
     }
   </style>
 </head>
@@ -75,8 +84,10 @@
       <button onclick="sendMessage()">Send</button>
       <button onclick="startMic()">🎤</button>
     </div>
-    <div class="keyword-buttons" id="keywordButtons"></div>
   </div>
+
+  <!-- Popup button container -->
+  <div id="popupContainer"></div>
 
   <script>
     // Keyword dictionary with URL + response + link
@@ -88,7 +99,7 @@
       },
       "snake": {
         url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/play.mp4",
-        response: "Drifting into the jungle parts… your adventure begins.",
+        response: "Drifting into the jungle… your adventure begins.",
         link: "https://playsnake.org/"
       },
       "shoot": {
@@ -96,26 +107,18 @@
         response: "Ready, aim… fire!",
         link: "https://example.com/shoot-game"
       }
-      // Add more keywords here!
     };
 
-    // Generate menu buttons dynamically
-    function buildMenu() {
-      const container = document.getElementById("keywordButtons");
-      for (let keyword in backgrounds) {
-        const btn = document.createElement("button");
-        btn.innerText = keyword.charAt(0).toUpperCase() + keyword.slice(1);
-        btn.onclick = () => window.open(backgrounds[keyword].link, "_blank");
-        container.appendChild(btn);
-      }
-    }
+    // Setup speech voices
+    let voices = [];
+    speechSynthesis.onvoiceschanged = () => { voices = speechSynthesis.getVoices(); };
 
-    // Text-to-speech
     function speak(text) {
       if (!window.speechSynthesis) return;
       let msg = new SpeechSynthesisUtterance(text);
+      msg.voice = voices.find(v => v.lang === "en-US") || voices[0];
       msg.rate = 1; msg.pitch = 1;
-      window.speechSynthesis.cancel(); // clear previous queue
+      window.speechSynthesis.cancel();
       window.speechSynthesis.speak(msg);
     }
 
@@ -130,6 +133,7 @@
         if (msg.includes(keyword)) {
           swapBackground(backgrounds[keyword].url);
           speak(backgrounds[keyword].response);
+          showPopup(keyword, backgrounds[keyword].link);
           found = true;
           break;
         }
@@ -152,6 +156,22 @@
       }
     }
 
+    // Show popup button
+    function showPopup(keyword, link) {
+      const container = document.getElementById("popupContainer");
+      container.innerHTML = ""; // clear previous button
+      const btn = document.createElement("button");
+      btn.className = "popup-btn show";
+      btn.innerText = "Open " + keyword.charAt(0).toUpperCase() + keyword.slice(1);
+      btn.onclick = () => window.open(link, "_blank");
+      container.appendChild(btn);
+
+      // Auto-hide after 10s
+      setTimeout(() => {
+        if (btn) btn.classList.remove("show");
+      }, 10000);
+    }
+
     // Microphone input
     function startMic() {
       let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -163,9 +183,6 @@
         sendMessage();
       }
     }
-
-    // Build menu on load
-    buildMenu();
   </script>
 </body>
 </html>
