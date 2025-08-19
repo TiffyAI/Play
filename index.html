@@ -3,8 +3,9 @@
 <head>
   <title>TiffyAI Interface</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: black; }
 
     .glass-panel {
       position: absolute;
@@ -24,11 +25,7 @@
       gap: 10px;
       z-index: 9999;
     }
-    .input-row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
+    .input-row { display: flex; gap: 10px; align-items: center; }
     input {
       flex: 1;
       background: rgba(255, 255, 255, 0.2);
@@ -46,10 +43,7 @@
       cursor: pointer;
       transition: 0.2s;
     }
-    button:hover {
-      background: rgba(255,255,255,0.5);
-    }
-    /* Popup button */
+    button:hover { background: rgba(255,255,255,0.5); }
     .popup-btn {
       position: absolute;
       bottom: 80px;
@@ -63,6 +57,23 @@
       transform: translateX(-50%) translateY(0);
       opacity: 1;
     }
+    /* Listening overlay */
+    .listening {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      padding: 10px 20px;
+      border-radius: 10px;
+      color: #00ffcc;
+      font-family: sans-serif;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 10000;
+    }
+    .listening.show { opacity: 1; }
   </style>
 </head>
 <body>
@@ -83,11 +94,15 @@
       <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
       <button onclick="sendMessage()">Send</button>
       <button onclick="startMic()">🎤</button>
+      <button onclick="goFullscreen()">⛶</button>
     </div>
   </div>
 
   <!-- Popup button container -->
   <div id="popupContainer"></div>
+
+  <!-- Listening overlay -->
+  <div id="listeningOverlay" class="listening">👂 Tiffy is listening…</div>
 
   <script>
     // Keyword dictionary with URL + response + link
@@ -109,13 +124,18 @@
       }
     };
 
-    // Setup speech voices
+    // Setup speech voices with a promise
     let voices = [];
-    speechSynthesis.onvoiceschanged = () => {
-      voices = speechSynthesis.getVoices();
-    };
+    let voicesReady = new Promise(resolve => {
+      function loadVoices() {
+        voices = speechSynthesis.getVoices();
+        if (voices.length > 0) resolve();
+      }
+      speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
+    });
 
-    function speak(text) {
+    async function speak(text) {
       if (!('speechSynthesis' in window)) {
         console.warn("Speech Synthesis not supported.");
         return;
@@ -123,24 +143,20 @@
 
       console.log("Tiffy says:", text); // debug
 
+      await voicesReady;
+
       let msg = new SpeechSynthesisUtterance(text);
       msg.rate = 1;
       msg.pitch = 1;
 
-      // pick a usable voice if available
       if (voices.length > 0) {
         msg.voice = voices.find(v => v.lang === "en-US") || voices[0];
       }
 
-      // cancel if already speaking
-      if (speechSynthesis.speaking) {
-        speechSynthesis.cancel();
-      }
-
+      speechSynthesis.cancel(); // clear queue
       speechSynthesis.speak(msg);
     }
 
-    // Handle send message
     function sendMessage() {
       let msg = document.getElementById('messageBox').value.toLowerCase();
       if (!msg) return;
@@ -161,7 +177,6 @@
       }
     }
 
-    // Swap video/image backgrounds
     function swapBackground(url) {
       let video = document.getElementById("bgvideo");
       if (url.endsWith(".mp4") || url.endsWith(".webm")) {
@@ -174,32 +189,39 @@
       }
     }
 
-    // Show popup button
     function showPopup(keyword, link) {
       const container = document.getElementById("popupContainer");
-      container.innerHTML = ""; // clear previous button
+      container.innerHTML = "";
       const btn = document.createElement("button");
       btn.className = "popup-btn show";
       btn.innerText = "Open " + keyword.charAt(0).toUpperCase() + keyword.slice(1);
       btn.onclick = () => window.open(link, "_blank");
       container.appendChild(btn);
-
-      // Auto-hide after 10s
-      setTimeout(() => {
-        if (btn) btn.classList.remove("show");
-      }, 10000);
+      setTimeout(() => { if (btn) btn.classList.remove("show"); }, 10000);
     }
 
-    // Microphone input
     function startMic() {
       let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
       recognition.lang = "en-US";
       recognition.start();
+
+      const overlay = document.getElementById("listeningOverlay");
+      overlay.classList.add("show");
+
       recognition.onresult = function(event) {
+        overlay.classList.remove("show");
         let transcript = event.results[0][0].transcript;
         document.getElementById('messageBox').value = transcript;
         sendMessage();
-      }
+      };
+      recognition.onend = () => overlay.classList.remove("show");
+    }
+
+    function goFullscreen() {
+      let el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else if (el.msRequestFullscreen) el.msRequestFullscreen();
     }
   </script>
 </body>
