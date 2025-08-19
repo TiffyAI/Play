@@ -5,12 +5,13 @@
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <style>
     body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+
     .glass-panel {
       position: absolute;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      width: 60%;
+      width: 65%;
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.3);
       backdrop-filter: blur(10px);
@@ -21,6 +22,7 @@
       display: flex;
       gap: 10px;
       align-items: center;
+      z-index: 9999; /* keeps above VR/AR buttons */
     }
     input {
       flex: 1;
@@ -48,7 +50,7 @@
       </video>
     </a-assets>
 
-    <a-sky src="#bgvideo"></a-sky>
+    <a-sky id="background" src="#bgvideo"></a-sky>
     <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
   </a-scene>
 
@@ -60,10 +62,10 @@
   </div>
 
   <script>
-    // Text-to-speech function
+    // Text-to-speech
     function speak(text) {
       let msg = new SpeechSynthesisUtterance(text);
-      msg.rate = 1; msg.pitch = 1; msg.voice = speechSynthesis.getVoices()[0];
+      msg.rate = 1; msg.pitch = 1;
       window.speechSynthesis.speak(msg);
     }
 
@@ -73,21 +75,31 @@
       if (!msg) return;
       console.log("User:", msg);
 
-      // Simple keyword action example
       if (msg.toLowerCase().includes("tetris")) {
-        document.getElementById("bgvideo").src =
-          "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4";
+        swapBackground("https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4");
         speak("Okay, loading Tetris world for you.");
       } else if (msg.toLowerCase().includes("space")) {
-        document.getElementById("bgvideo").src =
-          "https://cdn.aframe.io/360-image-gallery-boilerplate/img/space.jpg";
+        swapBackground("https://cdn.aframe.io/360-image-gallery-boilerplate/img/space.jpg");
         speak("I’ve set the mood to outer space.");
       } else {
         speak("I heard you say " + msg);
       }
     }
 
-    // Microphone input (Web Speech API)
+    // Swap video/image backgrounds
+    function swapBackground(url) {
+      let video = document.getElementById("bgvideo");
+      if (url.endsWith(".mp4") || url.endsWith(".webm")) {
+        video.src = url;
+        video.load();
+        video.play();
+        document.querySelector("#background").setAttribute("src", "#bgvideo");
+      } else {
+        document.querySelector("#background").setAttribute("src", url);
+      }
+    }
+
+    // Microphone input
     function startMic() {
       let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
       recognition.lang = "en-US";
