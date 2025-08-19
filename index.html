@@ -6,12 +6,12 @@
   <style>
     body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
 
-    .glass-panel {
+    .controls-panel {
       position: absolute;
       bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 65%;
+      right: 20px;
+      width: auto; /* Adjust width based on content */
+      max-width: 50%; /* Prevent it from getting too wide */
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.3);
       backdrop-filter: blur(10px);
@@ -22,7 +22,7 @@
       display: flex;
       gap: 10px;
       align-items: center;
-      z-index: 9999; /* keep panel above AR/VR buttons */
+      z-index: 9999;
     }
     input {
       flex: 1;
@@ -73,7 +73,7 @@
     <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
   </a-scene>
 
-    <div class="glass-panel">
+    <div class="controls-panel">
     <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
     <button onclick="sendMessage()">Send</button>
     <button id="micBtn" onclick="startMic()">🎤</button>
