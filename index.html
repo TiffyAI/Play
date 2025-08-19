@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TiffyAI Interface</title>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+
+    .glass-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 65%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 15px;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 9999; /* keeps panel above AR/VR buttons */
+    }
+    input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      padding: 8px;
+      border-radius: 8px;
+    }
+    button {
+      background: rgba(255,255,255,0.3);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <a-scene>
+    <a-assets>
+      <video id="bgvideo" autoplay loop muted playsinline
+        src="https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4">
+      </video>
+    </a-assets>
+
+    <a-sky id="background" src="#bgvideo"></a-sky>
+    <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
+  </a-scene>
+
+  <!-- Glass interface -->
+  <div class="glass-panel">
+    <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="startMic()">🎤</button>
+  </div>
+
+  <script>
+    // Background dictionary (easy to expand)
+    const backgrounds = {
+      "tetris": "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
+      "space": "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/play.mp4"
+      // add more here: "keyword": "url"
+    };
+
+    // Text-to-speech
+    function speak(text) {
+      let msg = new SpeechSynthesisUtterance(text);
+      msg.rate = 1; msg.pitch = 1;
+      window.speechSynthesis.speak(msg);
+    }
+
+    // Handle send message
+    function sendMessage() {
+      let msg = document.getElementById('messageBox').value;
+      if (!msg) return;
+      console.log("User:", msg);
+
+      let found = false;
+      for (let keyword in backgrounds) {
+        if (msg.toLowerCase().includes(keyword)) {
+          swapBackground(backgrounds[keyword]);
+          speak("Okay, loading " + keyword + " world for you.");
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        speak("I heard you say " + msg);
+      }
+    }
+
+    // Swap video/image backgrounds
+    function swapBackground(url) {
+      let video = document.getElementById("bgvideo");
+      if (url.endsWith(".mp4") || url.endsWith(".webm")) {
+        video.src = url;
+        video.load();
+        video.play();
+        document.querySelector("#background").setAttribute("src", "#bgvideo");
+      } else {
+        document.querySelector("#background").setAttribute("src", url);
+      }
+    }
+
+    // Microphone input
+    function startMic() {
+      let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-US";
+      recognition.start();
+      recognition.onresult = function(event) {
+        let transcript = event.results[0][0].transcript;
+        document.getElementById('messageBox').value = transcript;
+        sendMessage();
+      }
+    }
+  </script>
+</body>
+</html>
