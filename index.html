@@ -62,11 +62,18 @@
   </div>
 
   <script>
-    // Background dictionary (easy to expand)
+    // Keyword dictionary with unique responses
     const backgrounds = {
-      "tetris": "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
-      "space": "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/play.mp4"
-      // add more here: "keyword": "url"
+      "tetris": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
+        response: "Stacking blocks… welcome to the Tetris world!"
+      },
+      "space": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/play.mp4",
+        response: "Drifting into the cosmos… your space adventure begins."
+      }
+      // add more like this:
+      // "keyword": { url: "video_url", response: "custom phrase" }
     };
 
     // Text-to-speech
@@ -85,8 +92,8 @@
       let found = false;
       for (let keyword in backgrounds) {
         if (msg.toLowerCase().includes(keyword)) {
-          swapBackground(backgrounds[keyword]);
-          speak("Okay, loading " + keyword + " world for you.");
+          swapBackground(backgrounds[keyword].url);
+          speak(backgrounds[keyword].response);
           found = true;
           break;
         }
