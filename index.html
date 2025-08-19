@@ -3,16 +3,15 @@
 <head>
   <title>TiffyAI Interface</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: black; }
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
 
     .glass-panel {
       position: absolute;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      width: 70%;
+      width: 65%;
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.3);
       backdrop-filter: blur(10px);
@@ -21,11 +20,10 @@
       color: white;
       font-family: sans-serif;
       display: flex;
-      flex-direction: column;
       gap: 10px;
-      z-index: 9999;
+      align-items: center;
+      z-index: 9999; /* keep panel above AR/VR buttons */
     }
-    .input-row { display: flex; gap: 10px; align-items: center; }
     input {
       flex: 1;
       background: rgba(255, 255, 255, 0.2);
@@ -41,39 +39,26 @@
       border-radius: 8px;
       color: white;
       cursor: pointer;
-      transition: 0.2s;
     }
-    button:hover { background: rgba(255,255,255,0.5); }
+    /* Popup button for keyword actions */
     .popup-btn {
       position: absolute;
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100%);
-      opacity: 0;
-      transition: all 0.4s ease;
+      top: 20px;
+      right: -200px; /* hidden by default */
+      background: rgba(0, 150, 255, 0.8);
+      border: none;
+      padding: 12px 18px;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      font-family: sans-serif;
+      cursor: pointer;
+      transition: right 0.5s ease;
       z-index: 10000;
     }
     .popup-btn.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
+      right: 20px; /* slides in */
     }
-    /* Listening overlay */
-    .listening {
-      position: absolute;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.7);
-      padding: 10px 20px;
-      border-radius: 10px;
-      color: #00ffcc;
-      font-family: sans-serif;
-      font-weight: bold;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: 10000;
-    }
-    .listening.show { opacity: 1; }
   </style>
 </head>
 <body>
@@ -90,93 +75,83 @@
 
   <!-- Glass interface -->
   <div class="glass-panel">
-    <div class="input-row">
-      <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
-      <button onclick="sendMessage()">Send</button>
-      <button onclick="startMic()">🎤</button>
-      <button onclick="goFullscreen()">⛶</button>
-    </div>
+    <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="startMic()">🎤</button>
   </div>
 
-  <!-- Popup button container -->
-  <div id="popupContainer"></div>
-
-  <!-- Listening overlay -->
-  <div id="listeningOverlay" class="listening">👂 Tiffy is listening…</div>
+  <!-- Dynamic keyword button -->
+  <button id="keywordBtn" class="popup-btn" onclick="openKeywordLink()">Go</button>
 
   <script>
-    // Keyword dictionary with URL + response + link
+    // Keywords with video, response, and external link
     const backgrounds = {
       "tetris": {
         url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
         response: "Stacking blocks… welcome to the Tetris world!",
-        link: "https://tetris.com/play-tetris"
+        link: "https://tiffyai.github.io/Play/Tetris"
       },
       "snake": {
         url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/play.mp4",
-        response: "Drifting into the jungle… your adventure begins.",
-        link: "https://playsnake.org/"
+        response: "Slithering into the jungle world… watch your steps.",
+        link: "https://tiffyai.github.io/Play/Snake"
       },
       "shoot": {
         url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
-        response: "Ready, aim… fire!",
-        link: "https://example.com/shoot-game"
+        response: "Locked and loaded… entering battle mode.",
+        link: "https://tiffyai.github.io/Play/Shoot"
       }
+      // add more here
     };
 
-    // Setup speech voices with a promise
-    let voices = [];
-    let voicesReady = new Promise(resolve => {
-      function loadVoices() {
-        voices = speechSynthesis.getVoices();
-        if (voices.length > 0) resolve();
-      }
-      speechSynthesis.onvoiceschanged = loadVoices;
-      loadVoices();
-    });
+    let currentLink = null;
 
-    async function speak(text) {
-      if (!('speechSynthesis' in window)) {
-        console.warn("Speech Synthesis not supported.");
-        return;
-      }
-
-      console.log("Tiffy says:", text); // debug
-
-      await voicesReady;
+    // Speak using system's default voice
+    function speak(text) {
+      if (!('speechSynthesis' in window)) return;
+      console.log("Tiffy says:", text);
 
       let msg = new SpeechSynthesisUtterance(text);
       msg.rate = 1;
       msg.pitch = 1;
+      msg.lang = "en-US";
 
-      if (voices.length > 0) {
-        msg.voice = voices.find(v => v.lang === "en-US") || voices[0];
-      }
-
-      speechSynthesis.cancel(); // clear queue
+      speechSynthesis.cancel();
       speechSynthesis.speak(msg);
     }
 
+    // Boot-up greeting
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        speak("Hello, I’m Tiffy. I’m listening… Which world shall we visit?");
+      }, 2000);
+    });
+
+    // Handle send message
     function sendMessage() {
-      let msg = document.getElementById('messageBox').value.toLowerCase();
+      let msg = document.getElementById('messageBox').value;
       if (!msg) return;
       console.log("User:", msg);
 
       let found = false;
       for (let keyword in backgrounds) {
-        if (msg.includes(keyword)) {
+        if (msg.toLowerCase().includes(keyword)) {
           swapBackground(backgrounds[keyword].url);
           speak(backgrounds[keyword].response);
-          showPopup(keyword, backgrounds[keyword].link);
+          currentLink = backgrounds[keyword].link;
+          showKeywordButton();
           found = true;
           break;
         }
       }
+
       if (!found) {
         speak("I heard you say " + msg);
+        hideKeywordButton();
       }
     }
 
+    // Swap video/image backgrounds
     function swapBackground(url) {
       let video = document.getElementById("bgvideo");
       if (url.endsWith(".mp4") || url.endsWith(".webm")) {
@@ -189,39 +164,34 @@
       }
     }
 
-    function showPopup(keyword, link) {
-      const container = document.getElementById("popupContainer");
-      container.innerHTML = "";
-      const btn = document.createElement("button");
-      btn.className = "popup-btn show";
-      btn.innerText = "Open " + keyword.charAt(0).toUpperCase() + keyword.slice(1);
-      btn.onclick = () => window.open(link, "_blank");
-      container.appendChild(btn);
-      setTimeout(() => { if (btn) btn.classList.remove("show"); }, 10000);
+    // Show keyword button
+    function showKeywordButton() {
+      let btn = document.getElementById("keywordBtn");
+      btn.classList.add("show");
+    }
+    // Hide keyword button
+    function hideKeywordButton() {
+      let btn = document.getElementById("keywordBtn");
+      btn.classList.remove("show");
+      currentLink = null;
+    }
+    // Open keyword link
+    function openKeywordLink() {
+      if (currentLink) {
+        window.open(currentLink, "_blank");
+      }
     }
 
+    // Microphone input
     function startMic() {
       let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
       recognition.lang = "en-US";
       recognition.start();
-
-      const overlay = document.getElementById("listeningOverlay");
-      overlay.classList.add("show");
-
       recognition.onresult = function(event) {
-        overlay.classList.remove("show");
         let transcript = event.results[0][0].transcript;
         document.getElementById('messageBox').value = transcript;
         sendMessage();
-      };
-      recognition.onend = () => overlay.classList.remove("show");
-    }
-
-    function goFullscreen() {
-      let el = document.documentElement;
-      if (el.requestFullscreen) el.requestFullscreen();
-      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-      else if (el.msRequestFullscreen) el.msRequestFullscreen();
+      }
     }
   </script>
 </body>
