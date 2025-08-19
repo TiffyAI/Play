@@ -7,22 +7,26 @@
 <body>
   <a-scene>
     <a-assets>
-      <!-- Video must have an ID and must be muted for autoplay on most browsers -->
-      <video id="bgvideo" autoplay loop="true" muted playsinline
+      <video id="bgvideo" autoplay loop muted playsinline
         src="https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4">
       </video>
     </a-assets>
 
-    <!-- Use the video texture as the sky -->
     <a-sky src="#bgvideo"></a-sky>
 
-    <!-- Camera -->
-    <a-entity
-      camera
-      position="0 1.6 0"
-      look-controls="reverseMouseDrag: true"
-      wasd-controls>
-    </a-entity>
+    <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
   </a-scene>
+
+  <script>
+    window.addEventListener('load', function () {
+      var video = document.getElementById('bgvideo');
+      video.play().catch(function (e) {
+        console.log('Autoplay blocked, enabling manual start.');
+        document.body.addEventListener('click', function () {
+          video.play();
+        }, { once: true });
+      });
+    });
+  </script>
 </body>
 </html>
