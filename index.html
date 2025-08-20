@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TiffyAI Interface</title>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+
+    /* Loading Screen */
+    #loadingScreen {
+      position: absolute;
+      top:0;left:0;
+      width:100%;height:100%;
+      background:#111;
+      color:white;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index:20000;
+      transition: opacity 1s ease;
+    }
+    #loadingScreen img {
+      width:200px;
+      border-radius:50%;
+      box-shadow:0 0 30px #00f0ff;
+      margin-bottom:20px;
+    }
+    #loadingScreen h2, #loadingScreen p {
+      font-family:sans-serif;
+      text-align:center;
+    }
+    .glass-input {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 10px;
+      border-radius: 12px;
+      color: white;
+      margin: 10px 0;
+      font-size: 14px;
+      width: 220px;
+      text-align: center;
+    }
+    #startTiffy {
+      margin-top:15px;
+      padding:12px 20px;
+      border:none;
+      border-radius:10px;
+      background:linear-gradient(135deg, #00f0ff, #0080ff);
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
+      box-shadow:0 0 15px #00f0ff;
+    }
+    .talking { animation: lipMove 0.3s infinite alternate; }
+    @keyframes lipMove {
+      from { transform: scale(1,1); }
+      to { transform: scale(1,0.9); }
+    }
+
+    /* Glass input panel */
+    .glass-panel {
+      position: absolute;
+      bottom: 40px;
+      left: 30%;
+      transform: translateX(-50%);
+      width: 55%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 15px;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      z-index: 9999;
+    }
+    input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      padding: 8px;
+      border-radius: 8px;
+    }
+    button {
+      background: rgba(255,255,255,0.3);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 16px;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* Visualization bars */
+    .visualizer {
+      position: absolute;
+      bottom: 80px;
+      left: 30%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 4px;
+      height: 20px;
+      align-items: flex-end;
+      z-index: 10000;
+    }
+    .bar {
+      width: 4px;
+      background: #00f0ff;
+      border-radius: 2px;
+      height: 5px;
+      animation: bounce 0.6s infinite ease-in-out;
+    }
+    .bar:nth-child(2) { animation-delay: 0.1s; }
+    .bar:nth-child(3) { animation-delay: 0.2s; }
+    .bar:nth-child(4) { animation-delay: 0.3s; }
+    .bar:nth-child(5) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 100% { height: 5px; }
+      50% { height: 20px; }
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <!-- Loading screen -->
+  <div id="loadingScreen">
+    <img src="face.png" alt="Tiffy Face">
+    <h2>Hello, I’m TiffyAI 👋</h2>
+    <p>Choose my voice, tell me your name, and I’ll guide you through the whole ecosystem.</p>
+    <select id="voiceSelect"></select>
+    <button id="refreshVoices">🔄 Reload Voices</button>
+    <input id="userName" class="glass-input" placeholder="Enter your name..." />
+    <button id="startTiffy">🚀 Start</button>
+  </div>
+
+  <a-scene>
+    <a-assets>
+      <video id="bgvideo" autoplay loop muted playsinline
+        src="https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4">
+      </video>
+    </a-assets>
+    <a-sky id="background" src="#bgvideo"></a-sky>
+    <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
+  </a-scene>
+
+  <!-- Glass interface -->
+  <div class="glass-panel">
+    <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="startMic()">🎤</button>
+  </div>
+
+  <!-- Visualization -->
+  <div class="visualizer hidden" id="viz">
+    <div class="bar"></div><div class="bar"></div>
+    <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+  </div>
+
+  <script>
+    // Ecosystem structure
+    const backgrounds = {
+      "tetris": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
+        response: "Stacking blocks… welcome to the Tetris world!",
+        link: "https://tiffyai.github.io/Play/Tetris"
+      },
+      "snake": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/play.mp4",
+        response: "Slithering into the jungle world… watch your steps.",
+        link: "https://tiffyai.github.io/Play/Snake"
+      },
+      "shoot": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        response: "Locked and loaded… entering battle mode.",
+        link: "https://tiffyai.github.io/Play/Shoot"
+      }
+      // 🔮 Add more here
+    };
+
+    let currentLink = null;
+    let selectedVoice = null;
+    let voiceReady = false;
+    let userName = localStorage.getItem("tiffyUserName") || "";
+
+    // Memory store
+    let history = JSON.parse(localStorage.getItem("tiffyMemory") || "[]");
+    function saveMemory() {
+      localStorage.setItem("tiffyMemory", JSON.stringify(history));
+    }
+
+    // Voice dropdown population
+    function populateVoices() {
+      let voices = speechSynthesis.getVoices();
+      let select = document.getElementById("voiceSelect");
+      select.innerHTML = "";
+      voices.forEach((v, i) => {
+        let opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = v.name + " (" + v.lang + ")";
+        select.appendChild(opt);
+      });
+      if (voices.length > 0) {
+        selectedVoice = voices[0];
+        select.onchange = () => { selectedVoice = voices[select.value]; };
+      }
+    }
+    // Load voices on multiple triggers
+    speechSynthesis.onvoiceschanged = populateVoices;
+    window.onload = () => setTimeout(populateVoices, 500);
+    document.getElementById("refreshVoices").onclick = populateVoices;
+
+    // Start intro
+    document.getElementById("startTiffy").addEventListener("click", () => {
+      let nameInput = document.getElementById("userName").value.trim();
+      if (nameInput) {
+        userName = nameInput;
+        localStorage.setItem("tiffyUserName", userName);
+      }
+      voiceReady = true;
+      speak(`Voice activated. Hello ${userName || "friend"}, I’m Tiffy. I will guide you through the ecosystem.`, () => {
+        document.getElementById("loadingScreen").style.opacity = "0";
+        setTimeout(() => {
+          document.getElementById("loadingScreen").style.display = "none";
+        }, 1000);
+      });
+    });
+
+    // Speak with viz + lips
+    function speak(text, callback=null) {
+      if (!voiceReady || !('speechSynthesis' in window)) return;
+      console.log("Tiffy says:", text);
+
+      let msg = new SpeechSynthesisUtterance(text);
+      msg.rate = 1; msg.pitch = 1; msg.lang = "en-US";
+      if (selectedVoice) msg.voice = selectedVoice;
+
+      let viz = document.getElementById("viz");
+      viz.classList.remove("hidden");
+      let face = document.querySelector("#loadingScreen img");
+      if (face) face.classList.add("talking");
+
+      msg.onend = () => {
+        viz.classList.add("hidden");
+        if (face) face.classList.remove("talking");
+        if (callback) callback();
+      };
+
+      speechSynthesis.cancel();
+      speechSynthesis.speak(msg);
+    }
+
+    // Generate reply using memory (last 3 turns)
+    function generateReply(userMsg) {
+      let context = history.slice(-3).map(h => `${h.role}: ${h.text}`).join(" | ");
+      return `${userName || "friend"}, I heard you say "${userMsg}". Based on our recent chat: ${context}. 
+Remember, everything we explore connects back to the TiffyCoin ecosystem that I’m guiding you to.`;
+    }
+
+    // Handle send message
+    function sendMessage() {
+      let msg = document.getElementById('messageBox').value;
+      if (!msg) return;
+      console.log("User:", msg);
+
+      history.push({role:userName || "user", text:msg});
+      saveMemory();
+
+      let found = false;
+      for (let keyword in backgrounds) {
+        if (msg.toLowerCase().includes(keyword)) {
+          swapBackground(backgrounds[keyword].url);
+          speak(backgrounds[keyword].response);
+          history.push({role:"tiffy", text:backgrounds[keyword].response});
+          saveMemory();
+          currentLink = backgrounds[keyword].link;
+          setTimeout(() => { window.open(currentLink, "_blank"); }, 4000);
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        let reply = generateReply(msg);
+        speak(reply);
+        history.push({role:"tiffy", text:reply});
+        saveMemory();
+      }
+    }
+
+    // Swap video/image backgrounds
+    function swapBackground(url) {
+      let video = document.getElementById("bgvideo");
+      if (url.endsWith(".mp4") || url.endsWith(".webm")) {
+        video.src = url;
+        video.load(); video.play();
+        document.querySelector("#background").setAttribute("src", "#bgvideo");
+      } else {
+        document.querySelector("#background").setAttribute("src", url);
+      }
+    }
+
+    // Mic input
+    function startMic() {
+      let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-US"; recognition.start();
+      recognition.onresult = e => {
+        let transcript = e.results[0][0].transcript;
+        document.getElementById('messageBox').value = transcript;
+        sendMessage();
+      }
+    }
+  </script>
+</body>
+</html>
