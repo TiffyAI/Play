@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TiffyAI Interface</title>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+
+    .glass-panel {
+      position: absolute;
+      bottom: 40px;
+      left: 30%;
+      transform: translateX(-50%);
+      width: 55%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 15px;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      z-index: 9999; /* keep panel above AR/VR buttons */
+    }
+    input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      padding: 8px;
+      border-radius: 8px;
+    }
+    button {
+      background: rgba(255,255,255,0.3);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 16px;
+      color: white;
+      cursor: pointer;
+    }
+    /* Popup button for keyword actions */
+    .popup-btn {
+      position: absolute;
+      top: 20px;
+      right: -200px; /* hidden by default */
+      background: rgba(0, 150, 255, 0.8);
+      border: none;
+      padding: 12px 18px;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      font-family: sans-serif;
+      cursor: pointer;
+      transition: right 0.5s ease;
+      z-index: 10000;
+    }
+    .popup-btn.show {
+      right: 20px; /* slides in */
+    }
+
+    /* Voice activation button */
+    #voiceActivate {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 14px 28px;
+      font-size: 18px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #00f0ff, #0080ff);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 20px #00f0ff;
+      z-index: 10001;
+    }
+    #voiceActivate.glow {
+      animation: glowPulse 1.5s infinite alternate;
+    }
+    @keyframes glowPulse {
+      from { box-shadow: 0 0 20px #00f0ff; }
+      to   { box-shadow: 0 0 40px #00f0ff; }
+    }
+  </style>
+</head>
+<body>
+  <a-scene>
+    <a-assets>
+      <video id="bgvideo" autoplay loop muted playsinline
+        src="https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4">
+      </video>
+    </a-assets>
+
+    <a-sky id="background" src="#bgvideo"></a-sky>
+    <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
+  </a-scene>
+
+  <!-- Glass interface -->
+  <div class="glass-panel">
+    <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="startMic()">🎤</button>
+  </div>
+
+  <!-- Dynamic keyword button -->
+  <button id="keywordBtn" class="popup-btn" onclick="openKeywordLink()">Go</button>
+
+  <!-- Voice activation button -->
+  <button id="voiceActivate" class="glow">🔊 Activate Voice</button>
+
+  <script>
+    // Keywords with video, response, and external link
+    const backgrounds = {
+      "tetris": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
+        response: "Stacking blocks… welcome to the Tetris world!",
+        link: "https://tiffyai.github.io/Play/Tetris"
+      },
+      "snake": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/play.mp4",
+        response: "Slithering into the jungle world… watch your steps.",
+        link: "https://tiffyai.github.io/Play/Snake"
+      },
+      "shoot": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        response: "Locked and loaded… entering battle mode.",
+        link: "https://tiffyai.github.io/Play/Shoot"
+      }
+      // add more here
+    };
+
+    let currentLink = null;
+    let voiceReady = false;
+
+    // Speak using system's default voice
+    function speak(text) {
+      if (!voiceReady || !('speechSynthesis' in window)) return;
+      console.log("Tiffy says:", text);
+
+      let msg = new SpeechSynthesisUtterance(text);
+      msg.rate = 1;
+      msg.pitch = 1;
+      msg.lang = "en-US";
+
+      speechSynthesis.cancel();
+      speechSynthesis.speak(msg);
+    }
+
+    // Voice activation handler
+    document.getElementById("voiceActivate").addEventListener("click", () => {
+      voiceReady = true;
+      speak("Voice activated. Hello, I’m Tiffy. I’m listening… Which world shall we visit?");
+      document.getElementById("voiceActivate").style.display = "none";
+    });
+
+    // Handle send message
+    function sendMessage() {
+      let msg = document.getElementById('messageBox').value;
+      if (!msg) return;
+      console.log("User:", msg);
+
+      let found = false;
+      for (let keyword in backgrounds) {
+        if (msg.toLowerCase().includes(keyword)) {
+          swapBackground(backgrounds[keyword].url);
+          speak(backgrounds[keyword].response);
+          currentLink = backgrounds[keyword].link;
+          showKeywordButton();
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        speak("I heard you say " + msg);
+        hideKeywordButton();
+      }
+    }
+
+    // Swap video/image backgrounds
+    function swapBackground(url) {
+      let video = document.getElementById("bgvideo");
+      if (url.endsWith(".mp4") || url.endsWith(".webm")) {
+        video.src = url;
+        video.load();
+        video.play();
+        document.querySelector("#background").setAttribute("src", "#bgvideo");
+      } else {
+        document.querySelector("#background").setAttribute("src", url);
+      }
+    }
+
+    // Show keyword button
+    function showKeywordButton() {
+      let btn = document.getElementById("keywordBtn");
+      btn.classList.add("show");
+    }
+    // Hide keyword button
+    function hideKeywordButton() {
+      let btn = document.getElementById("keywordBtn");
+      btn.classList.remove("show");
+      currentLink = null;
+    }
+    // Open keyword link
+    function openKeywordLink() {
+      if (currentLink) {
+        window.open(currentLink, "_blank");
+      }
+    }
+
+    // Microphone input
+    function startMic() {
+      let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-US";
+      recognition.start();
+      recognition.onresult = function(event) {
+        let transcript = event.results[0][0].transcript;
+        document.getElementById('messageBox').value = transcript;
+        sendMessage();
+      }
+    }
+  </script>
+</body>
+</html>
