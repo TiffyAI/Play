@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
   <title>TiffyAI Interface</title>
@@ -127,7 +127,6 @@
   </style>
 </head>
 <body>
-  <!-- Loading screen -->
   <div id="loadingScreen">
     <img id="tiffyFace" src="face.png" alt="Tiffy Face">
     <h2 id="greetingText">Hello, I’m TiffyAI 👋</h2>
@@ -153,14 +152,12 @@
     <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
   </a-scene>
 
-  <!-- Glass interface -->
   <div class="glass-panel" id="chatPanel" style="display:none;">
     <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
     <button onclick="sendMessage()">Send</button>
     <button onclick="startMic()">🎤</button>
   </div>
 
-  <!-- Visualization -->
   <div class="visualizer hidden" id="viz">
     <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
   </div>
@@ -289,7 +286,7 @@
         link: "https://tiffyai.github.io/Tetris"
       },
       "sphere": {
-        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/motion.mp4",
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
         responses: [
           "released and all yours… entering flow mode",
           "Hope your aim’s good, this one gets wild!",
@@ -404,7 +401,6 @@
           "Aha, info-hunter spotted… socials, audits, whitepaper, even the vision — everything you need to flex your knowledge. Say the word"
         ],
         link: "https://t.me/TiffyAI_Bot"
-     
       },
       "website": {
         url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/drop.gif",
@@ -413,9 +409,9 @@
           "Taking you to the heart of TiffyAI. The official website is where the vision lives.",
           "You got it. Loading up the official TiffyAI home base for you right now.",
           "Boom. Straight to the source. Let’s roll into the official TiffyAI website."
-        ],
-        link: "https://www.tiffyai.co.za"
-       }
+       ],
+       link: "https://www.tiffyai.co.za"
+      }
     };
 
     // --- state & memory ---
@@ -477,7 +473,10 @@
         document.getElementById("userName").style.display = "none";
         document.getElementById("changeName").style.display = "inline-block";
         const g = greetings[Math.floor(Math.random()*greetings.length)];
-        document.getElementById("greetingText").innerText = g.replace("{name}", nickname(userName));
+        // The fix is here:
+        // The original code tried to use .replace() on a string that didn't have a placeholder.
+        // This is the corrected line that works with your current responses.
+        document.getElementById("greetingText").innerText = `${g} Welcome back, ${nickname(userName)}!`;
       }
     });
 
