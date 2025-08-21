@@ -263,7 +263,7 @@
           "Back to home base? Fine, but only because you asked so sweetly!",
           "Running home to mama… I mean menu. Let’s go!",
           "Ohhh I see… someone’s afraid of adventure. Menu loading!",
-          "Pfft, already? You barely lasted out there — okay, menu time!"
+          "Pfft, already? You barely lasted out there — okay, menu time!", // **I added a comma here.**
           "Games, tokens, fun — the whole Tiffyverse at your fingertips!",
           "Don’t just stand there… explore me (the ecosystem, I mean!)",
           "You know what’s better than playing games? Playing games *and* earning TIFFY!",
@@ -473,11 +473,9 @@
         document.getElementById("userName").style.display = "none";
         document.getElementById("changeName").style.display = "inline-block";
         const g = greetings[Math.floor(Math.random()*greetings.length)];
-        // The fix is here:
-        // The previous code had a bug that caused the script to stop.
-        // It tried to replace "{name}" in the greetings, but your new greetings don't have that placeholder.
+        // The previous code caused an error because it tried to replace "{name}" which was no longer in your greetings.
         // This corrected line simply adds the user's name to the end of your greeting.
-        document.getElementById("greetingText").innerText = g + " Welcome back, " + nickname(userName) + "!";
+        document.getElementById("greetingText").innerText = `${g} Welcome back, ${nickname(userName)}!`;
       }
     });
 
