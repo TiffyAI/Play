@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TiffyAI Interface</title>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+
+    /* Glass panels */
+    .glass-panel, .glass-panel-start {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 15px;
+      color: white;
+      font-family: sans-serif;
+      z-index: 9999;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      justify-content: center;
+    }
+    .glass-panel { bottom: 40px; }
+    .glass-panel-start { top: 20%; flex-direction: column; }
+
+    input, select {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      padding: 8px;
+      border-radius: 8px;
+      width: 80%;
+    }
+    button {
+      background: rgba(255,255,255,0.3);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 16px;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* Lips animation */
+    #tiffyFace {
+      width: 200px;
+      height: auto;
+      margin-top: 10px;
+      animation: none;
+    }
+    .talking {
+      animation: lips 0.25s infinite;
+    }
+    @keyframes lips {
+      0% { transform: scaleY(1); }
+      50% { transform: scaleY(0.7); }
+      100% { transform: scaleY(1); }
+    }
+  </style>
+</head>
+<body>
+  <a-scene>
+    <a-assets>
+      <video id="bgvideo" autoplay loop muted playsinline
+        src="https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4">
+      </video>
+    </a-assets>
+    <a-sky id="background" src="#bgvideo"></a-sky>
+    <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
+  </a-scene>
+
+  <!-- Start panel (name + voice) -->
+  <div class="glass-panel-start" id="startPanel">
+    <h2>Welcome to TiffyAI 🌸</h2>
+    <input type="text" id="nameBox" placeholder="What's your name?" />
+    <select id="voiceSelect"></select>
+    <button onclick="startTiffy()">Start</button>
+    <img id="tiffyFace" src="face.png" alt="Tiffy Face">
+  </div>
+
+  <!-- Chat panel -->
+  <div class="glass-panel" id="chatPanel" style="display:none;">
+    <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="startMic()">🎤</button>
+  </div>
+
+  <script>
+    // ---------------- MEMORY ----------------
+    let history = [];
+    let userName = "";
+    let chosenVoice = null;
+
+    function saveMemory() {
+      if (history.length > 20) history.shift();
+      localStorage.setItem("tiffyMemory", JSON.stringify(history));
+    }
+    function loadMemory() {
+      let mem = localStorage.getItem("tiffyMemory");
+      if (mem) history = JSON.parse(mem);
+    }
+    loadMemory();
+
+    // ---------------- ECOSYSTEM ----------------
+    const backgrounds = {
+      "tetris": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
+        responses: [
+          "Stacking blocks… welcome to the Tetris world!",
+          "Time to fit in — Tiffy style! 🟦🟨🟥",
+          "Careful, don’t let the tower fall!",
+          "Blocks everywhere, let’s make it rain shapes!"
+        ],
+        link: "https://tiffyai.github.io/Play/Tetris"
+      },
+      "snake": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/play.mp4",
+        responses: [
+          "Slithering into the jungle world… watch your steps 🐍",
+          "Watch out, the snake world bites!",
+          "Hissss... welcome to the jungle maze.",
+          "Keep your eyes sharp, things move fast here!"
+        ],
+        link: "https://tiffyai.github.io/Play/Snake"
+      },
+      "shoot": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        responses: [
+          "Locked and loaded… entering battle mode 🔫",
+          "Hope your aim’s good, this one gets wild!",
+          "Pew pew time! Ready, steady, fire!",
+          "Careful — sparks will fly in this arena!"
+        ],
+        link: "https://tiffyai.github.io/Play/Shoot"
+      }
+    };
+
+    const startupGreetings = [
+      "Heeey {name}, ready to have some fun with me today?",
+      "Well look who it is… {name}! I missed ya 💖",
+      "Yay! {name} is here — let’s go explore the worlds together!",
+      "Hey superstar {name}, buckle up — Tiffy’s got plans!"
+    ];
+
+    const ecosystemPromos = [
+      "Want to dive into a game, or should we go claim some TIFFY tokens before the airdrop ends?",
+      "By the way, did you know TIFFY tokens are on presale at half price?",
+      "We could play, or we could make you richer — ever tried grabbing TIFFY on PancakeSwap?",
+      "The ecosystem’s growing fast… hop in before the presale closes!"
+    ];
+
+    // ---------------- SPEAK ----------------
+    function speak(text) {
+      if (!('speechSynthesis' in window)) return;
+      console.log("Tiffy says:", text);
+
+      let msg = new SpeechSynthesisUtterance(text);
+      if (chosenVoice) msg.voice = chosenVoice;
+      msg.rate = 1;
+      msg.pitch = 1;
+      msg.lang = "en-US";
+
+      let face = document.getElementById("tiffyFace");
+      face.classList.add("talking");
+      msg.onend = () => { face.classList.remove("talking"); };
+
+      speechSynthesis.cancel();
+      speechSynthesis.speak(msg);
+    }
+
+    // ---------------- NICKNAME ----------------
+    function getNickName(name) {
+      if (!name) return "friend";
+      if (Math.random() < 0.35) return name + "ey"; // playful mode
+      return name;
+    }
+
+    // ---------------- START ----------------
+    function populateVoices() {
+      let voices = speechSynthesis.getVoices();
+      let select = document.getElementById("voiceSelect");
+      select.innerHTML = "";
+      voices.forEach((v, i) => {
+        let opt = document.createElement("option");
+        opt.value = i;
+        opt.innerText = v.name + " (" + v.lang + ")";
+        select.appendChild(opt);
+      });
+    }
+    populateVoices();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = populateVoices;
+    }
+
+    function startTiffy() {
+      userName = document.getElementById("nameBox").value.trim() || "friend";
+      let vIndex = document.getElementById("voiceSelect").value;
+      chosenVoice = speechSynthesis.getVoices()[vIndex] || null;
+
+      document.getElementById("startPanel").style.display = "none";
+      document.getElementById("chatPanel").style.display = "flex";
+
+      let greeting = startupGreetings[Math.floor(Math.random()*startupGreetings.length)];
+      greeting = greeting.replace("{name}", getNickName(userName));
+      speak(greeting);
+      history.push({role:"tiffy", text:greeting});
+      saveMemory();
+    }
+
+    // ---------------- CHAT ----------------
+    function sendMessage() {
+      let msg = document.getElementById('messageBox').value;
+      if (!msg) return;
+      document.getElementById('messageBox').value = "";
+      console.log("User:", msg);
+
+      history.push({role:"user", text:msg});
+      saveMemory();
+
+      let found = false;
+      for (let keyword in backgrounds) {
+        if (msg.toLowerCase().includes(keyword)) {
+          swapBackground(backgrounds[keyword].url);
+          let reply = backgrounds[keyword].responses[
+            Math.floor(Math.random() * backgrounds[keyword].responses.length)
+          ];
+          speak(reply);
+          history.push({role:"tiffy", text:reply});
+          saveMemory();
+          setTimeout(() => { window.open(backgrounds[keyword].link, "_blank"); }, 4000);
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        let reply = generateReply(msg);
+        speak(reply);
+        history.push({role:"tiffy", text:reply});
+        saveMemory();
+      }
+    }
+
+    function generateReply(userMsg) {
+      let context = history.slice(-3).map(h => `${h.role}: ${h.text}`).join(" | ");
+      let promo = ecosystemPromos[Math.floor(Math.random()*ecosystemPromos.length)];
+      let nickname = getNickName(userName);
+
+      let spice = [
+        `Oh ${nickname}, you always surprise me. Remember earlier when we talked about: ${context}?`,
+        `Haha ${nickname}, you mentioned ${context} a moment ago… I’m connecting the dots!`,
+        `You know what, ${nickname}? ${context} is still fresh in my head.`
+      ];
+      let memoryLine = spice[Math.floor(Math.random()*spice.length)];
+
+      return `${memoryLine} ${promo}`;
+    }
+
+    // ---------------- UTIL ----------------
+    function swapBackground(url) {
+      let video = document.getElementById("bgvideo");
+      if (url.endsWith(".mp4") || url.endsWith(".webm")) {
+        video.src = url;
+        video.load();
+        video.play();
+        document.querySelector("#background").setAttribute("src", "#bgvideo");
+      } else {
+        document.querySelector("#background").setAttribute("src", url);
+      }
+    }
+
+    // ---------------- MIC ----------------
+    function startMic() {
+      let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-US";
+      recognition.start();
+      recognition.onresult = function(event) {
+        let transcript = event.results[0][0].transcript;
+        document.getElementById('messageBox').value = transcript;
+        sendMessage();
+      }
+    }
+  </script>
+</body>
+</html>
