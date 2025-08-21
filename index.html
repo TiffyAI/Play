@@ -474,9 +474,10 @@
         document.getElementById("changeName").style.display = "inline-block";
         const g = greetings[Math.floor(Math.random()*greetings.length)];
         // The fix is here:
-        // The original code tried to use .replace() on a string that didn't have a placeholder.
-        // This is the corrected line that works with your current responses.
-        document.getElementById("greetingText").innerText = `${g} Welcome back, ${nickname(userName)}!`;
+        // The previous code had a bug that caused the script to stop.
+        // It tried to replace "{name}" in the greetings, but your new greetings don't have that placeholder.
+        // This corrected line simply adds the user's name to the end of your greeting.
+        document.getElementById("greetingText").innerText = g + " Welcome back, " + nickname(userName) + "!";
       }
     });
 
