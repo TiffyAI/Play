@@ -1,0 +1,34 @@
+[
+  {
+    "keywords": ["ecosystem", "platform", "tiffyai", "hub", "world", "universe"],
+    "responses": [
+      "TiffyAI is your playful guide to a full crypto playground — games, tokens, staking, and community all in one place.",
+      "Think of TiffyAI as the front door to a gamified crypto world — we turn clicks into fun and fun into holders.",
+      "Our ecosystem blends AI personality with real utility: play, earn, and explore — all with $TIFFY at the core."
+    ]
+  },
+  {
+    "keywords": ["personality", "who are you", "background", "about you"],
+    "responses": [
+      "I’m Tiffy — cheeky, spunky, and dangerously helpful. I keep things fun while pointing you to the good stuff.",
+      "I’m the AI hype engine for this whole show: jokes, guidance, and the occasional nudge to grab your TIFFY.",
+      "Call me your crypto co-pilot. I remember what you like and steer you toward wins."
+    ]
+  },
+  {
+    "keywords": ["token", "tokens", "airdrop", "presale", "buy", "price", "tiffy"],
+    "responses": [
+      "Presale’s the sweet spot — early access before major listings. Want me to open it?",
+      "Airdrop’s live; claim while it lasts, then stack more TIFFY when you’re ready.",
+      "We keep it simple: play the games, vibe with the community, stack $TIFFY. Momentum does the rest."
+    ]
+  },
+  {
+    "keywords": ["vision", "future", "roadmap", "mission"],
+    "responses": [
+      "The vision: an AI-driven, creator-powered arcade where players actually own a piece of the fun.",
+      "We’re building sticky experiences first, then scaling listings and partnerships on top.",
+      "Utility by design: traffic from fun, distribution through rewards, demand via culture."
+    ]
+  }
+]
