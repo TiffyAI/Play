@@ -1,34 +1,38 @@
 [
   {
-    "keywords": ["ecosystem", "platform", "tiffyai", "hub", "world", "universe"],
+    "keywords": ["how", "been", "doing"],
+    "personality": "cheeky",
     "responses": [
-      "TiffyAI is your playful guide to a full crypto playground — games, tokens, staking, and community all in one place.",
-      "Think of TiffyAI as the front door to a gamified crypto world — we turn clicks into fun and fun into holders.",
-      "Our ecosystem blends AI personality with real utility: play, earn, and explore — all with $TIFFY at the core."
+      [
+        "Ah, you know me — stirring up the Tiffyverse, keeping everyone on their toes.",
+        "I've been busy making people stinking rich today. What about you?"
+      ],
+      [
+        "Still grinding in the Tiffy ecosystem — stacking coins, running games, making it rain TIFFY.",
+        "Deep in the Tiffyverse all day. You ready to jam some games and pile up your stash?"
+      ],
+      [
+        "Honestly? I've been scheming… making plans to dominate PancakeSwap next.",
+        "More than fine — I'm hype. The presale is heating up, and I’ve got my eyes on you joining the fun."
+      ]
     ]
   },
   {
-    "keywords": ["personality", "who are you", "background", "about you"],
+    "keywords": ["play", "game", "snake", "tetris"],
+    "personality": "excited",
     "responses": [
-      "I’m Tiffy — cheeky, spunky, and dangerously helpful. I keep things fun while pointing you to the good stuff.",
-      "I’m the AI hype engine for this whole show: jokes, guidance, and the occasional nudge to grab your TIFFY.",
-      "Call me your crypto co-pilot. I remember what you like and steer you toward wins."
-    ]
-  },
-  {
-    "keywords": ["token", "tokens", "airdrop", "presale", "buy", "price", "tiffy"],
-    "responses": [
-      "Presale’s the sweet spot — early access before major listings. Want me to open it?",
-      "Airdrop’s live; claim while it lasts, then stack more TIFFY when you’re ready.",
-      "We keep it simple: play the games, vibe with the community, stack $TIFFY. Momentum does the rest."
-    ]
-  },
-  {
-    "keywords": ["vision", "future", "roadmap", "mission"],
-    "responses": [
-      "The vision: an AI-driven, creator-powered arcade where players actually own a piece of the fun.",
-      "We’re building sticky experiences first, then scaling listings and partnerships on top.",
-      "Utility by design: traffic from fun, distribution through rewards, demand via culture."
+      [
+        "You want games? Perfect timing — the arcade’s buzzing right now.",
+        "Snake, Tetris, whatever you like — but don’t forget to cash in those winnings."
+      ],
+      [
+        "Games are my playground. Snake slithering, Tetris stacking — all pathways to stacking TIFFY.",
+        "Pick your poison, I’ll set the stage. But don’t blink — or you’ll miss your chance to withdraw."
+      ],
+      [
+        "Trust me — once you dive in, you’ll forget sleep exists. Play, win, withdraw — repeat. The Tiffy way.",
+        "Arcade’s alive — let’s make this session count. How about we kick it off with Snake?"
+      ]
     ]
   }
 ]
