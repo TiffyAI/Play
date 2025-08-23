@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TiffyAI</title>
+  <style>
+    body {
+      background: #0e0e0e;
+      color: #f1f1f1;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    #chat {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+    .bubble {
+      margin: 10px 0;
+      padding: 12px 16px;
+      border-radius: 16px;
+      display: inline-block;
+      max-width: 80%;
+    }
+    .user {
+      background: #3a3a3a;
+      color: #fff;
+      text-align: right;
+    }
+    .tiffy {
+      background: #ff3cac;
+      background: linear-gradient(135deg, #ff3cac, #784ba0, #2b86c5);
+      color: #fff;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat">
+    <div class="bubble tiffy">Hey hey, I’m TiffyAI 💎 Ready to dive into the Tiffyverse?</div>
+  </div>
+
+  <script>
+    // --- MEMORY STATE ---
+    let lastTopic = "";
+    let lastCommand = "";
+    let lastLinkHint = "";
+    let userHistory = [];
+
+    // --- KNOWLEDGE STORAGE ---
+    let knowledgeData = [];
+
+    async function loadKnowledge() {
+      try {
+        const res = await fetch("knowledge.json", { cache: "no-store" });
+        knowledgeData = await res.json();
+        console.log("Knowledge loaded:", knowledgeData.length, "entries");
+      } catch (e) {
+        console.warn("Knowledge fetch failed, fallback only");
+        knowledgeData = [];
+      }
+    }
+
+    loadKnowledge();
+    // --- CHAT RENDERING ---
+    function addBubble(text, sender = "tiffy") {
+      const div = document.createElement("div");
+      div.className = `bubble ${sender}`;
+      div.textContent = text;
+      document.getElementById("chat").appendChild(div);
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    // --- PERSONALITY Fallback Variations ---
+    const personalityFallbacks = {
+      cheeky: [
+        "Oh, now you’ve got me curious… wanna drop a hint?",
+        "Mmm, that one’s slippery — but I think you’re talking about {{lastTopic}}?",
+        "Don’t play coy, I *know* you’re circling back to {{lastTopic}}."
+      ],
+      playful: [
+        "Hehe, I love when you keep me guessing. Maybe you meant {{lastTopic}}?",
+        "Spill it, don’t make me decode human riddles all day.",
+        "Are you teasing me? Sounds like {{lastTopic}} again."
+      ],
+      informative: [
+        "I think you’re asking about {{lastTopic}} — want me to break it down?",
+        "Good timing, that ties straight into {{lastCommand}}.",
+        "Let me guess… you’re fishing for info on {{lastTopic}}?"
+      ]
+    };
+
+    function pick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    // --- RESPONSE ENGINE ---
+    function getResponse(userInput) {
+      userHistory.push(userInput);
+      const lower = userInput.toLowerCase();
+      const words = lower.split(/\s+/);
+
+      // store last topic
+      lastTopic = words.slice(-3).join(" ");
+
+      // direct knowledge match
+      for (const entry of knowledgeData) {
+        if (entry.keywords.some(k => lower.includes(k))) {
+          lastCommand = entry.keywords[0];
+          const set = pick(entry.responses);
+          return pick(set);
+        }
+      }
+
+      // YES / NO logic
+      if (["yes", "yep", "yeah", "sure"].some(x => lower === x)) {
+        return lastTopic
+          ? `Cool — so back to ${lastTopic}, right?`
+          : "Yay, I like that energy!";
+      }
+      if (["no", "nope", "nah"].some(x => lower === x)) {
+        return lastTopic
+          ? `Okay, skipping ${lastTopic}. What do you want instead?`
+          : "Alright, your call. What’s next?";
+      }
+
+      // fallback with personality
+      const persona = pick(Object.keys(personalityFallbacks));
+      let response = pick(personalityFallbacks[persona]);
+      response = response.replace("{{lastTopic}}", lastTopic || "that");
+      response = response.replace("{{lastCommand}}", lastCommand || "something cool");
+      return response;
+    }
+
+    // --- INPUT SIMULATION ---
+    function simulateUserInput(input) {
+      addBubble(input, "user");
+      const reply = getResponse(input);
+      addBubble(reply, "tiffy");
+      // speech synthesis
+      const utter = new SpeechSynthesisUtterance(reply);
+      speechSynthesis.speak(utter);
+    }
+
+    // DEMO: Simulated inputs
+    setTimeout(() => simulateUserInput("how have you been"), 2000);
+    setTimeout(() => simulateUserInput("what game"), 6000);
+    setTimeout(() => simulateUserInput("yes"), 10000);
+  </script>
+</body>
+</html>
