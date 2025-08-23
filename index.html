@@ -11,7 +11,7 @@
       position: absolute;
       top:0;left:0;
       width:100%;height:100%;
-      background:#000 url("drop.gif") center/cover no-repeat;
+      background:#000 url("https://ipfs.io/ipfs/Qma3L2F7J9k5Q6n8D7g2V1W3p3Q2j3b4m6p9x4r5z7x8n") center/cover no-repeat;
       color:white;
       display:flex;
       flex-direction:column;
@@ -139,7 +139,6 @@
       <video id="bgvideo" autoplay loop muted crossorigin="anonymous" playsinline></video>
     </a-assets>
     <a-sky id="background" src="#bgvideo" rotation="0 0 0" material="shader: flat;"></a-sky>
-    <a-box id="box" position="0 1.5 -3" rotation="0 45 0" color="#4CC3D9" width="1" height="1" depth="1"></a-box>
     <a-entity id="camera" camera look-controls position="0 1.6 0"></a-entity>
   </a-scene>
 
@@ -188,15 +187,33 @@
       }, 500);
     };
 
+    // Modified speak function to handle links
     function speak(text) {
-      const speech = new SpeechSynthesisUtterance(text);
-      speech.volume = 1;
-      speech.rate = 1.2;
-      speech.pitch = 1;
-      window.speechSynthesis.speak(speech);
-      addMessageToHistory(aiName, text, 'ai');
-    }
+        // Create an element to contain the message
+        const messageContainer = document.createElement('div');
+        messageContainer.classList.add('chat-message', 'ai');
 
+        // Check for and replace with clickable links
+        const linkRegex = /\/g;
+        let processedText = text.replace(linkRegex, (match, url) => {
+            return `<a href="${url}" target="_blank" style="color: #00f0ff; text-decoration: underline;">${url}</a>`;
+        });
+
+        // Add the message to the chat history
+        messageContainer.innerHTML = `${aiName}: ${processedText}`;
+        const history = document.getElementById('chat-history');
+        history.appendChild(messageContainer);
+        history.scrollTop = history.scrollHeight;
+
+        // Speak the text content only
+        const speech = new SpeechSynthesisUtterance(text.replace(linkRegex, ''));
+        speech.volume = 1;
+        speech.rate = 1.2;
+        speech.pitch = 1;
+        window.speechSynthesis.speak(speech);
+    }
+    
+    // Original addMessageToHistory function for user messages
     function addMessageToHistory(sender, message, type) {
       const history = document.getElementById('chat-history');
       const messageDiv = document.createElement('div');
@@ -303,7 +320,7 @@
 
       // Handle "yes" and "no" special cases first
       if (message === 'yes' && conversationMemory.history.length > 1) {
-          const lastBotMessage = conversationMemory.history[conversationMemory.history.length - 2].text.toLowerCase();
+          const lastBotMessage = conversationMemory.history[conversationMemory.history.length - 2].textContent.toLowerCase();
           
           if (lastBotMessage.includes("guide you step by step")) {
               speak("Perfect. First, connect your wallet to the ecosystem through the wallet connect link.");
