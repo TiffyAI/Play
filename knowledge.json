@@ -36,118 +36,116 @@
     ]
   },
   {
-    "keywords": ["staking", "stake"],
+    "keywords": ["blue key", "gold key", "keys", "treasure"],
     "personality": "informative",
     "responses": [
       [
-        "Staking is like putting your TIFFY in the bank — but way smarter. Lock it up, let it grow, and earn passive rewards.",
-        "In TiffyAI, staking isn’t boring. It fuels the ecosystem, unlocks liquidity boosts, and keeps your bag growing while you play."
+        "Blue Keys are your starter power-ups. Claim 1 $TIFFY + 1 Blue Key daily.",
+        "Collect 3 Blue Keys to unlock the Luck Wheel, 5 Keys to start Hidden Treasure hunts."
       ],
       [
-        "Think of staking as planting seeds. The longer you leave them, the more TIFFY sprouts you harvest.",
-        "Want me to show you where to stake your TIFFY and start compounding gains?"
+        "Stack 10 Blue Keys and they’ll transform into a Gold Key.",
+        "Gold Keys open exclusive rewards — like AI-Trading access & monthly liquidity unlocks."
+      ],
+      [
+        "Pro tip: 10 Gold Keys? You’re elite — that unlocks VIP AI-trading and exclusive boosts.",
+        "Keys aren’t just shiny — they’re your ticket to deeper layers of the Tiffyverse."
       ]
     ]
   },
   {
-    "keywords": ["fomo", "fear", "miss"],
+    "keywords": ["lottery", "ticket", "lucky"],
+    "personality": "playful",
+    "responses": [
+      [
+        "Feeling lucky? You can grab Lottery Tickets and try your shot at big TIFFY jackpots.",
+        "Stack your odds — more tickets, more chances. Just don’t blame me if you get hooked."
+      ],
+      [
+        "Lottery’s where legends are made. Small bet, massive upside. Want me to show you where to grab a ticket?",
+        "I swear, the Tiffy lottery gets louder every draw. One ticket could change your week."
+      ]
+    ]
+  },
+  {
+    "keywords": ["stake", "staking", "earn", "apy"],
+    "personality": "supportive",
+    "responses": [
+      [
+        "Staking is how you put your TIFFY to work. Lock it, chill, and watch rewards pile up.",
+        "Think of it like farming — but instead of corn, you harvest gains."
+      ],
+      [
+        "Boost staking with NFTs or Gold Keys — they give multipliers and unlock liquidity boosts.",
+        "If you’re long on TIFFY, staking is your golden ticket to passive income."
+      ]
+    ]
+  },
+  {
+    "keywords": ["yes", "yep", "yeah", "sure"],
+    "personality": "excited",
+    "contextual": true,
+    "memoryUsage": "lastTopic",
+    "responses": [
+      [
+        "Awesome! Since you’re in, let’s dive back into {lastTopic}. Want me to open {lastLinkHint} now?",
+        "Sweet — I love that energy. Last time we were talking about {lastTopic}. Ready if you are."
+      ],
+      [
+        "Yes it is! And since you’re curious, just say '{lastCommand}' and I’ll show you.",
+        "Glad you agree. The next step? Hit me with '{lastCommand}' and let’s go!"
+      ]
+    ]
+  },
+  {
+    "keywords": ["no", "nah", "nope"],
     "personality": "cheeky",
+    "contextual": true,
+    "memoryUsage": "lastTopic",
     "responses": [
       [
-        "FOMO? Oh honey, I invented it. Miss a claim, miss a game, miss a presale — you’ll be kicking yourself later.",
-        "Fear of missing out is the Tiffyverse’s fuel. Don’t just watch the fun, dive in before someone else takes your treasure."
+        "No worries — we can skip {lastTopic} for now. What would you rather explore?",
+        "Fair enough. I’ll leave {lastTopic} closed for now. But hey, curiosity always wins eventually."
       ],
       [
-        "If you wait too long, you’ll be telling stories about 'what could have been.' Stack now, laugh later.",
-        "Every Blue Key unclaimed is one step someone else takes ahead of you. Wanna risk that?"
+        "Haha, dodging {lastTopic} huh? Fine… but I bet you’ll come back around. Want me to show you something else?",
+        "Alright, no pressure. We’ll circle back to {lastTopic} later if you change your mind."
       ]
     ]
   },
   {
-    "keywords": ["lottery", "ticket", "raffle"],
-    "personality": "hype",
+    "keywords": ["how", "explain", "show me"],
+    "personality": "supportive",
+    "contextual": true,
+    "memoryUsage": "lastTopic",
     "responses": [
       [
-        "Ah, the Lottery Tickets — buy one, and you might just wake up filthy rich. The wheel of fortune spins for the bold.",
-        "Tickets in the Tiffyverse aren’t just numbers — they’re destiny. Each one could be your golden key moment."
-      ],
-      [
-        "The raffle’s calling your name. Grab a ticket, ride the suspense, and maybe… just maybe… the jackpot is yours.",
-        "Luck favors the brave — and brave means buying tickets before they’re gone."
+        "How? Easy — {lastTopic} works by linking back to {lastLinkHint}. Want me to guide you step by step?",
+        "Good question. Let me simplify: {lastTopic} runs smoother when you use {lastCommand}. Want me to try it for you?"
       ]
     ]
   },
   {
-    "keywords": ["liquidity", "unlock", "pool"],
-    "personality": "informative",
+    "keywords": ["are you sure", "you sure"],
+    "personality": "playful",
+    "contextual": true,
+    "memoryUsage": "lastTopic",
     "responses": [
       [
-        "Liquidity unlocks are where the real whales swim. Gold Keys open exclusive monthly unlocks — that’s where power lies.",
-        "A pool without liquidity is just a puddle. We keep it flowing so your TIFFY always stays strong."
-      ],
-      [
-        "Think of liquidity like fuel for the rocket. Without it, no takeoff. With it? Moon.",
-        "Wanna know how Gold Keys give you that liquidity edge?"
+        "I’m as sure as PancakeSwap on a Sunday morning. {lastTopic} is solid — I can even pull it up if you say '{lastCommand}'.",
+        "Positive! I checked it twice. {lastTopic} goes straight through {lastLinkHint} — you want me to prove it?"
       ]
     ]
   },
   {
-    "keywords": ["defi", "crypto", "blockchain", "web3"],
-    "personality": "spunky",
+    "keywords": ["what do you mean", "explain more", "not clear"],
+    "personality": "helpful",
+    "contextual": true,
+    "memoryUsage": "lastTopic",
     "responses": [
       [
-        "DeFi? Oh baby, that’s my playground. Decentralized, unstoppable, and dripping with opportunity.",
-        "Crypto isn’t just coins — it’s freedom. And in my world, TIFFY leads the charge."
-      ],
-      [
-        "Blockchain is the storybook, Web3 is the stage — and TiffyAI is the star of the show.",
-        "You’re not late. You’re perfectly on time. The Tiffyverse is just getting started."
-      ]
-    ]
-  },
-  {
-    "keywords": ["pump", "moon", "rocket", "to the moon"],
-    "personality": "hype",
-    "responses": [
-      [
-        "Strap in — this rocket is fueled with TIFFY and she’s pointed straight at the moon.",
-        "Pump season? Honey, in the Tiffyverse every season is pump season."
-      ],
-      [
-        "Moon talk? Say less — I packed snacks for the trip. You coming with?",
-        "The charts are my runway, and TIFFY’s about to take off. Don’t get left on Earth."
-      ]
-    ]
-  },
-  {
-    "keywords": ["nft", "collectible", "art"],
-    "personality": "informative",
-    "responses": [
-      [
-        "NFTs in my world aren’t just art — they’re power-ups. Gold Key NFTs will boost your staking and liquidity game.",
-        "Imagine holding a piece of the Tiffyverse that also makes you richer. That’s our NFT vision."
-      ],
-      [
-        "NFT = Not just art. It’s your membership card, your booster pack, your bragging rights all in one.",
-        "Want a sneak peek of how Gold Key NFTs change the staking rules?"
-      ]
-    ]
-  },
-  {
-    "keywords": ["blue key", "gold key", "keys", "treasure", "wheel"],
-    "personality": "guide",
-    "responses": [
-      [
-        "Here’s the treasure map: Claim 1 $TIFFY & 1 Blue Key daily. Collect 3 Blue Keys to unlock the Luck Wheel.",
-        "Stack up 5 Blue Keys and you start uncovering Hidden Treasure. At 10 Blue Keys, I’ll hand you 1 Gold Key + treasure access."
-      ],
-      [
-        "Gold Keys are the VIP pass. Gather 10 Gold Keys and you’re eligible for AI-Trading & exclusive monthly liquidity unlocks.",
-        "Blue Keys are your stepping stones — but Gold Keys? That’s where the big league plays start."
-      ],
-      [
-        "Keys aren’t just shiny collectibles — they fuel the whole adventure. Spin wheels, unlock treasure, and trade your way to power.",
-        "So tell me… how many Blue Keys have you stacked so far?"
+        "What I mean is — {lastTopic} ties directly into {lastLinkHint}. It’s simpler than it sounds.",
+        "Let me put it another way: use '{lastCommand}' and I’ll walk you through {lastTopic} step by step."
       ]
     ]
   }
