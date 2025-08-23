@@ -1,380 +1,151 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>TiffyAI Interface</title>
-  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <meta charset="UTF-8">
+  <title>TiffyAI</title>
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-
-    /* Loading Screen with drop.gif behind Tiffy */
-    #loadingScreen {
-      position: absolute;
-      top:0;left:0;
-      width:100%;height:100%;
-      background:#000 url("https://ipfs.io/ipfs/Qma3L2F7J9k5Q6n8D7g2V1W3p3Q2j3b4m6p9x4r5z7x8n") center/cover no-repeat;
-      color:white;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      z-index:20000;
-      transition: opacity 1s ease;
+    body {
+      background: black;
+      color: #00ffc8;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
     }
-    #loadingScreen img {
-      width:200px;
-      border-radius:50%;
-      box-shadow:0 0 30px #00f0ff;
-      margin-bottom:10px;
-    }
-    #loadingScreen h2, #loadingScreen p {
-      font-family:sans-serif;
-      text-align:center;
-      margin:6px 0;
-    }
-    .glass-input {
-      background: rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      padding: 10px;
-      border-radius: 8px;
-      color: white;
-      font-family: sans-serif;
-      font-size: 16px;
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-    }
-    .glass-input::placeholder { color: rgba(255, 255, 255, 0.7); }
-    .glass-input:focus { outline: none; border-color: #00f0ff; }
-
-    /* Main UI */
-    #mainUI {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
+    #chat-container {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      padding: 20px 0;
-      z-index: 1000;
+      height: 100vh;
     }
-
-    #messageBox {
-      width: 80%;
-      max-width: 600px;
-      margin-bottom: 10px;
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
     }
-    #sendButton, #micButton {
-      background: #00f0ff;
+    .user { color: #ffcc00; margin: 5px 0; }
+    .tiffy { color: #00ffc8; margin: 5px 0; }
+    #input-container {
+      display: flex;
+      padding: 10px;
+      background: #111;
+    }
+    #user-input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      outline: none;
+      background: #222;
+      color: white;
+    }
+    button {
+      background: #00ffc8;
       border: none;
       padding: 10px 20px;
       cursor: pointer;
-      border-radius: 8px;
-      font-family: sans-serif;
+      color: black;
       font-weight: bold;
-      color: #000;
-      box-shadow: 0 0 15px #00f0ff;
-      margin-right: 10px;
-    }
-    #micButton {
-      background: #f000ff;
-      box-shadow: 0 0 15px #f000ff;
-    }
-    #micButton:hover {
-      background: #ff4dff;
-    }
-    #messageBox:focus, #sendButton:focus, #micButton:focus { outline: none; }
-    #messageBox, #sendButton, #micButton {
-      transition: all 0.2s ease;
-    }
-    #messageBox:hover, #sendButton:hover, #micButton:hover {
-      transform: scale(1.05);
-    }
-
-    #chat-history {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 30%;
-      height: 70%;
-      padding: 20px;
-      overflow-y: auto;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-right: 1px solid rgba(255, 255, 255, 0.1);
-      color: white;
-      font-family: sans-serif;
-      font-size: 14px;
-      line-height: 1.6;
-    }
-    .chat-message.user {
-      text-align: right;
-      color: #00f0ff;
-      font-weight: bold;
-    }
-    .chat-message.ai {
-      text-align: left;
-      color: #f000ff;
-      font-style: italic;
-    }
-    #chat-history h3 {
-      text-align: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 10px;
     }
   </style>
 </head>
 <body>
-
-  <div id="loadingScreen">
-    <img src="https://ipfs.io/ipfs/QmfSg7Wc6X1Z8N7gC4p7R6p9t7p5M7q5R6w7q5w5q5p" alt="TiffyAI Logo">
-    <h2>TiffyAI</h2>
-    <p id="loadingStatus">Loading Tiffyverse...</p>
-    <div id="loadingProgress" style="width: 200px; height: 10px; background: rgba(255, 255, 255, 0.2); border-radius: 5px; margin-top: 10px;">
-      <div id="progressBar" style="width: 0%; height: 100%; background: #00f0ff; border-radius: 5px; transition: width 0.5s ease;"></div>
-    </div>
-  </div>
-
-  <a-scene embedded style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;">
-    <a-assets>
-      <video id="bgvideo" autoplay loop muted crossorigin="anonymous" playsinline src="https://ipfs.io/ipfs/Qma3L2F7J9k5Q6n8D7g2V1W3p3Q2j3b4m6p9x4r5z7x8n"></video>
-    </a-assets>
-    <a-sky id="background" src="#bgvideo" rotation="0 0 0" material="shader: flat;"></a-sky>
-    <a-entity id="camera" camera look-controls position="0 1.6 0"></a-entity>
-  </a-scene>
-
-  <div id="chat-history">
-    <h3>TiffyAI Chat</h3>
-  </div>
-
-  <div id="mainUI">
-    <input type="text" id="messageBox" class="glass-input" placeholder="Ask Tiffy a question...">
-    <div style="display:flex;">
-      <button id="sendButton">Send</button>
-      <button id="micButton" onclick="startMic()">
-        <img src="https://ipfs.io/ipfs/QmTf2Zt1X1W2W9b7z5C5Q7H8E5X2K1J1T5P8b2M7S9" style="width: 20px; vertical-align: middle;">
-      </button>
+  <div id="chat-container">
+    <div id="messages"></div>
+    <div id="input-container">
+      <input id="user-input" type="text" placeholder="Talk to TiffyAI...">
+      <button onclick="sendMessage()">Send</button>
     </div>
   </div>
 
   <script>
-    let loadingTimer;
-    let userName = localStorage.getItem('tiffy_user_name');
-    let aiName = "TiffyAI";
-    let isSpeaking = false;
-
-    // Fixed the loading logic
-    document.getElementById("loadingStatus").innerText = `Waking up ${aiName}...`;
-
-    function hideLoadingScreen() {
-      const loadingScreen = document.getElementById("loadingScreen");
-      loadingScreen.style.opacity = "0";
-      setTimeout(() => { loadingScreen.style.display = "none"; }, 1000);
-      document.body.style.overflow = "auto";
-      if (!userName) {
-        speak("Hello, I am Tiffy. What is your name?", false);
-      } else {
-        speak(`Welcome back, ${userName}. How can I help you today?`, false);
-      }
-    }
-
-    // Set a timeout for the loading screen to hide no matter what
-    loadingTimer = setTimeout(hideLoadingScreen, 3500);
-
-    // This part is crucial for making the chat functional. It fetches the knowledge base once the window is fully loaded.
-    window.onload = function() {
-        document.getElementById("loadingProgress").style.display = "none";
-        setTimeout(() => {
-            document.getElementById("loadingStatus").innerText = "Tiffyverse is live.";
-            clearTimeout(loadingTimer);
-            setTimeout(hideLoadingScreen, 1500);
-        }, 500);
-    };
-
-    function speak(text, updateHistory = true) {
-      if (updateHistory) {
-          addMessageToHistory(aiName, text, 'ai');
-      }
-      const linkRegex = /\/g;
-      const speechText = text.replace(linkRegex, '');
-      isSpeaking = true;
-      const speech = new SpeechSynthesisUtterance(speechText);
-      speech.volume = 1;
-      speech.rate = 1.2;
-      speech.pitch = 1;
-      window.speechSynthesis.speak(speech);
-
-      speech.onend = () => {
-          isSpeaking = false;
-      };
-    }
-
-    function addMessageToHistory(sender, message, type) {
-      const history = document.getElementById('chat-history');
-      const messageDiv = document.createElement('div');
-      messageDiv.classList.add('chat-message', type);
-      const linkRegex = /\/g;
-      let processedMessage = message.replace(linkRegex, (match, url) => {
-          if (url.includes('knowledge.json')) {
-              return ``;
-          }
-          return `<a href="${url}" target="_blank" style="color: #00f0ff; text-decoration: underline;">click here</a>`;
-      });
-      if (type === 'ai') {
-          messageDiv.innerHTML = `${sender}: ${processedMessage}`;
-      } else {
-          messageDiv.textContent = `${sender}: ${processedMessage}`;
-      }
-      history.appendChild(messageDiv);
-      history.scrollTop = history.scrollHeight;
-    }
-
-    function setVideo(url) {
-      const video = document.getElementById("bgvideo");
-      if (!video) return;
-      if (url.endsWith(".mp4") || url.endsWith(".webm")) {
-        video.src = url;
-        try { video.load(); video.play(); } catch(e){}
-        document.querySelector("#background").setAttribute("src", "#bgvideo");
-      } else {
-        document.querySelector("#background").setAttribute("src", url);
-      }
-    }
-
-    function startMic() {
-      try {
-        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Recognition) { speak("Sorry, speech recognition isn't supported in your browser.", false); return; }
-        const recognition = new Recognition();
-        recognition.lang = "en-US";
-        recognition.start();
-        recognition.onresult = function(event) {
-          const transcript = event.results[0][0].transcript;
-          document.getElementById('messageBox').value = transcript;
-          sendMessage();
-        };
-      } catch (e) {
-        speak("Microphone access failed.", false);
-      }
-    }
-
-    // Enter-to-send
-    document.getElementById('messageBox').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') sendMessage();
-    });
-
-    if (userName) {
-      document.getElementById("userName").style.display = "none";
-      document.getElementById("changeName").style.display = "inline-block";
-    }
-
-    // TiffyAI Conversational Logic
     let knowledgeBase = [];
-    let conversationMemory = {
-        lastTopic: null,
-        lastLinkHint: null,
-        lastCommand: null,
-        history: []
-    };
+    let lastTopic = null;
+    let conversationHistory = [];
+    let ttsEnabled = true;
 
-    fetch('knowledge.json')
-      .then(response => response.json())
-      .then(data => {
-        knowledgeBase = data;
-        console.log("Knowledge base loaded successfully.");
-      })
-      .catch(error => {
-        console.error("Error loading knowledge.json:", error);
-      });
-
-    function processResponse(response) {
-        let processedResponse = response;
-        if (conversationMemory.lastTopic) {
-            processedResponse = processedResponse.replace(/{lastTopic}/g, conversationMemory.lastTopic);
+    // --- Load knowledge.json with caching ---
+    async function loadKnowledge() {
+      try {
+        const response = await fetch("knowledge.json?_=" + new Date().getTime());
+        knowledgeBase = await response.json();
+        localStorage.setItem("tiffyKnowledge", JSON.stringify(knowledgeBase));
+      } catch (err) {
+        console.warn("Knowledge load failed, using cached copy.");
+        const cached = localStorage.getItem("tiffyKnowledge");
+        if (cached) {
+          knowledgeBase = JSON.parse(cached);
         }
-        if (conversationMemory.lastLinkHint) {
-            processedResponse = processedResponse.replace(/{lastLinkHint}/g, conversationMemory.lastLinkHint);
-        }
-        if (conversationMemory.lastCommand) {
-            processedResponse = processedResponse.replace(/{lastCommand}/g, conversationMemory.lastCommand);
-        }
-        return processedResponse;
+      }
     }
 
+    // --- Utility ---
+    function speak(text) {
+      if (!ttsEnabled) return;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.pitch = 1.2;
+      utter.rate = 1.0;
+      utter.voice = speechSynthesis.getVoices().find(v => v.lang.startsWith("en")) || null;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utter);
+    }
+
+    function addMessage(text, sender) {
+      const div = document.createElement("div");
+      div.className = sender;
+      div.textContent = (sender === "user" ? "You: " : "Tiffy: ") + text;
+      document.getElementById("messages").appendChild(div);
+      document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+    }
+
+    // --- Core engine ---
+    function findBestResponse(userInput) {
+      const words = userInput.toLowerCase().split(/\s+/);
+
+      // Search knowledge.json
+      for (const item of knowledgeBase) {
+        if (item.keywords.some(k => words.includes(k))) {
+          lastTopic = item;
+          return randomFrom(item.responses.flat());
+        }
+      }
+
+      // If we have a topic in memory, try to stay on track
+      if (lastTopic) {
+        return randomFrom(lastTopic.responses.flat());
+      }
+
+      // Smarter fallback
+      const fallbackOptions = [
+        "I’m not sure I caught that — want me to explain how blue keys work?",
+        "Hmm, interesting... but tell me, are you here to play or to earn?",
+        "That one slipped past me, but I can always guide you through games, staking, or the presale."
+      ];
+      return randomFrom(fallbackOptions);
+    }
+
+    function randomFrom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    // --- Messaging ---
     function sendMessage() {
-      if (isSpeaking) { return; }
-      const messageBox = document.getElementById('messageBox');
-      const message = messageBox.value.toLowerCase().trim();
-      if (!message) return;
+      const input = document.getElementById("user-input");
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = "";
 
-      addMessageToHistory(userName || 'User', message, 'user');
-      conversationMemory.history.push({ type: 'user', text: message });
-      let responseText = null;
+      addMessage(text, "user");
+      conversationHistory.push({ role: "user", text });
 
-      const nameMatch = message.match(/(my name is|i am) (.*)/);
-      if (nameMatch) {
-          userName = nameMatch[2].trim();
-          localStorage.setItem('tiffy_user_name', userName);
-          responseText = `Hello, ${userName}! It's a pleasure to meet you.`;
-      } else {
-        if (message === 'yes' && conversationMemory.history.length > 1) {
-            const lastBotMessage = conversationMemory.history[conversationMemory.history.length - 2].text.toLowerCase();
-            
-            if (lastBotMessage.includes("guide you step by step")) {
-                responseText = "Perfect. First, connect your wallet to the ecosystem through the wallet connect link.";
-            } else if (lastBotMessage.includes("try it for you")) {
-                responseText = "Okay, here we go. The system is executing the command now...";
-            } else if (lastBotMessage.includes("prove it")) {
-                responseText = "Watch this: It's all about seamless transactions.";
-            }
-        } else if (message === 'no') {
-            responseText = "Alright, no pressure. Let me know if you change your mind.";
-        }
-        
-        if (responseText === null) {
-            let matchedEntry = null;
-
-            for (const entry of knowledgeBase) {
-                const keywords = entry.keywords.map(k => k.toLowerCase());
-                if (keywords.some(keyword => message.includes(keyword))) {
-                    matchedEntry = entry;
-                    break;
-                }
-            }
-
-            if (matchedEntry) {
-                 const responseSubArray = matchedEntry.responses[Math.floor(Math.random() * matchedEntry.responses.length)];
-                responseText = responseSubArray[Math.floor(Math.random() * responseSubArray.length)];
-
-                if (matchedEntry.contextual) {
-                    responseText = processResponse(responseText);
-                } else {
-                    if (matchedEntry.memoryUsage) {
-                        conversationMemory.lastTopic = matchedEntry.keywords[0]; 
-                        conversationMemory.lastLinkHint = "the games page"; 
-                        conversationMemory.lastCommand = "say 'play game'"; 
-                    }
-                }
-            }
-        }
-      }
-
-      if (responseText === null) {
-          const fallbackEntry = knowledgeBase.find(e => e.keywords.includes("fallback"));
-          if (fallbackEntry) {
-              const randomIndex = Math.floor(Math.random() * fallbackEntry.responses[0].length);
-              responseText = fallbackEntry.responses[0][randomIndex];
-          } else {
-              responseText = "I'm not sure I understand that. Can you rephrase?";
-          }
-      }
-
-      speak(responseText);
-      messageBox.value = '';
+      const reply = findBestResponse(text);
+      addMessage(reply, "tiffy");
+      conversationHistory.push({ role: "tiffy", text: reply });
+      speak(reply);
     }
 
-    document.getElementById('sendButton').onclick = sendMessage;
-    document.getElementById('messageBox').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') sendMessage();
+    // Init
+    window.addEventListener("load", () => {
+      loadKnowledge();
+      addMessage("Hey there! I'm TiffyAI — your cheeky crypto sidekick. Ready to dive into the Tiffyverse?", "tiffy");
+      speak("Hey there! I'm TiffyAI — your cheeky crypto sidekick. Ready to dive into the Tiffyverse?");
     });
   </script>
 </body>
