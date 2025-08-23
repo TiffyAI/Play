@@ -136,7 +136,7 @@
 
   <a-scene embedded style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;">
     <a-assets>
-      <video id="bgvideo" autoplay loop muted crossorigin="anonymous" playsinline></video>
+      <video id="bgvideo" autoplay loop muted crossorigin="anonymous" playsinline src="https://ipfs.io/ipfs/Qma3L2F7J9k5Q6n8D7g2V1W3p3Q2j3b4m6p9x4r5z7x8n"></video>
     </a-assets>
     <a-sky id="background" src="#bgvideo" rotation="0 0 0" material="shader: flat;"></a-sky>
     <a-entity id="camera" camera look-controls position="0 1.6 0"></a-entity>
@@ -160,6 +160,7 @@
     let loadingTimer;
     let userName = localStorage.getItem('tiffy_user_name');
     let aiName = "TiffyAI";
+    let isSpeaking = false;
 
     document.getElementById("loadingStatus").innerText = `Waking up ${aiName}...`;
 
@@ -169,56 +170,65 @@
       setTimeout(() => { loadingScreen.style.display = "none"; }, 1000);
       document.body.style.overflow = "auto";
       if (!userName) {
-        speak("Hello, I am Tiffy. What is your name?");
+        speak("Hello, I am Tiffy. What is your name?", false);
       } else {
-        speak(`Welcome back, ${userName}. How can I help you today?`);
+        speak(`Welcome back, ${userName}. How can I help you today?`, false);
       }
     }
 
     // Set a timeout for the loading screen in case of a slow connection
-    loadingTimer = setTimeout(hideLoadingScreen, 5000);
+    loadingTimer = setTimeout(hideLoadingScreen, 3000);
 
-    window.onload = function() {
-      document.getElementById("loadingProgress").style.display = "none";
-      setTimeout(() => {
+    // No need for window.onload, just run the logic after a slight delay
+    setTimeout(() => {
         document.getElementById("loadingStatus").innerText = "Tiffyverse is live.";
         clearTimeout(loadingTimer);
         setTimeout(hideLoadingScreen, 1500);
-      }, 500);
-    };
+    }, 500);
 
-    // Modified speak function to handle links
-    function speak(text) {
-        // Create an element to contain the message
-        const messageContainer = document.createElement('div');
-        messageContainer.classList.add('chat-message', 'ai');
+    // Modified speak function to handle links and chat history in one go
+    function speak(text, updateHistory = true) {
+      if (updateHistory) {
+          addMessageToHistory(aiName, text, 'ai');
+      }
+      
+      const linkRegex = /\/g;
+      const speechText = text.replace(linkRegex, ''); // Text for speech synthesis
+      
+      isSpeaking = true;
+      const speech = new SpeechSynthesisUtterance(speechText);
+      speech.volume = 1;
+      speech.rate = 1.2;
+      speech.pitch = 1;
+      window.speechSynthesis.speak(speech);
 
-        // Check for and replace with clickable links
-        const linkRegex = /\/g;
-        let processedText = text.replace(linkRegex, (match, url) => {
-            return `<a href="${url}" target="_blank" style="color: #00f0ff; text-decoration: underline;">${url}</a>`;
-        });
-
-        // Add the message to the chat history
-        messageContainer.innerHTML = `${aiName}: ${processedText}`;
-        const history = document.getElementById('chat-history');
-        history.appendChild(messageContainer);
-        history.scrollTop = history.scrollHeight;
-
-        // Speak the text content only
-        const speech = new SpeechSynthesisUtterance(text.replace(linkRegex, ''));
-        speech.volume = 1;
-        speech.rate = 1.2;
-        speech.pitch = 1;
-        window.speechSynthesis.speak(speech);
+      speech.onend = () => {
+          isSpeaking = false;
+      };
     }
-    
-    // Original addMessageToHistory function for user messages
+
+    // New unified addMessageToHistory function that handles links
     function addMessageToHistory(sender, message, type) {
       const history = document.getElementById('chat-history');
       const messageDiv = document.createElement('div');
       messageDiv.classList.add('chat-message', type);
-      messageDiv.textContent = `${sender}: ${message}`;
+
+      // Check for and replace with clickable links
+      const linkRegex = /\/g;
+      let processedMessage = message.replace(linkRegex, (match, url) => {
+          // If the URL is just knowledge.json, we don't make it a clickable link
+          if (url.includes('knowledge.json')) {
+              return ``;
+          }
+          return `<a href="${url}" target="_blank" style="color: #00f0ff; text-decoration: underline;">click here</a>`;
+      });
+      
+      if (type === 'ai') {
+          messageDiv.innerHTML = `${sender}: ${processedMessage}`;
+      } else {
+          messageDiv.textContent = `${sender}: ${processedMessage}`;
+      }
+      
       history.appendChild(messageDiv);
       history.scrollTop = history.scrollHeight;
     }
@@ -241,7 +251,7 @@
     function startMic() {
       try {
         const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Recognition) { speak("Sorry, speech recognition isn't supported in your browser."); return; }
+        if (!Recognition) { speak("Sorry, speech recognition isn't supported in your browser.", false); return; }
         const recognition = new Recognition();
         recognition.lang = "en-US";
         recognition.start();
@@ -251,7 +261,7 @@
           sendMessage();
         };
       } catch (e) {
-        speak("Microphone access failed.");
+        speak("Microphone access failed.", false);
       }
     }
 
@@ -290,22 +300,24 @@
       });
 
     // Helper function to process responses with placeholders
-    function processResponse(response, memory) {
+    function processResponse(response) {
         let processedResponse = response;
-        if (memory.lastTopic) {
-            processedResponse = processedResponse.replace(/{lastTopic}/g, memory.lastTopic);
+        if (conversationMemory.lastTopic) {
+            processedResponse = processedResponse.replace(/{lastTopic}/g, conversationMemory.lastTopic);
         }
-        if (memory.lastLinkHint) {
-            processedResponse = processedResponse.replace(/{lastLinkHint}/g, memory.lastLinkHint);
+        if (conversationMemory.lastLinkHint) {
+            processedResponse = processedResponse.replace(/{lastLinkHint}/g, conversationMemory.lastLinkHint);
         }
-        if (memory.lastCommand) {
-            processedResponse = processedResponse.replace(/{lastCommand}/g, memory.lastCommand);
+        if (conversationMemory.lastCommand) {
+            processedResponse = processedResponse.replace(/{lastCommand}/g, conversationMemory.lastCommand);
         }
         return processedResponse;
     }
 
     // New sendMessage logic
     function sendMessage() {
+      if (isSpeaking) { return; }
+      
       const messageBox = document.getElementById('messageBox');
       const message = messageBox.value.toLowerCase().trim();
       if (!message) return;
@@ -314,79 +326,78 @@
       
       // Add user message to history
       conversationMemory.history.push({ type: 'user', text: message });
-      if (conversationMemory.history.length > 10) {
-        conversationMemory.history.shift(); // Keep history to last 10 turns
-      }
 
-      // Handle "yes" and "no" special cases first
-      if (message === 'yes' && conversationMemory.history.length > 1) {
-          const lastBotMessage = conversationMemory.history[conversationMemory.history.length - 2].textContent.toLowerCase();
-          
-          if (lastBotMessage.includes("guide you step by step")) {
-              speak("Perfect. First, connect your wallet to the ecosystem through the wallet connect link.");
-              messageBox.value = '';
-              return;
-          } else if (lastBotMessage.includes("try it for you")) {
-              speak("Okay, here we go. The system is executing the command now...");
-              messageBox.value = '';
-              return;
-          } else if (lastBotMessage.includes("prove it")) {
-              speak("Watch this: It's all about seamless transactions.");
-              messageBox.value = '';
-              return;
-          }
-      } else if (message === 'no') {
-          // Fallback logic for "no"
-          speak("Alright, no pressure. Let me know if you change your mind.");
-          messageBox.value = '';
-          return;
-      }
+      let responseText = null;
 
-      // Check for keyword matches in the knowledge base
-      let matchedResponse = null;
-      let matchedEntry = null;
+      // Handle name-setting
+      const nameMatch = message.match(/my name is (.*)/);
+      if (nameMatch) {
+          userName = nameMatch[1];
+          localStorage.setItem('tiffy_user_name', userName);
+          responseText = `Hello, ${userName}! It's a pleasure to meet you.`;
+      } else {
+        // Handle "yes" and "no" special cases
+        if (message === 'yes' && conversationMemory.history.length > 1) {
+            const lastBotMessage = conversationMemory.history[conversationMemory.history.length - 2].text.toLowerCase();
+            
+            if (lastBotMessage.includes("guide you step by step")) {
+                responseText = "Perfect. First, connect your wallet to the ecosystem through the wallet connect link.";
+            } else if (lastBotMessage.includes("try it for you")) {
+                responseText = "Okay, here we go. The system is executing the command now...";
+            } else if (lastBotMessage.includes("prove it")) {
+                responseText = "Watch this: It's all about seamless transactions.";
+            }
+        } else if (message === 'no') {
+            responseText = "Alright, no pressure. Let me know if you change your mind.";
+        }
+        
+        // General keyword matching if no special case was hit
+        if (responseText === null) {
+            let matchedEntry = null;
 
-      for (const entry of knowledgeBase) {
-        const keywords = entry.keywords.map(k => k.toLowerCase());
-        if (keywords.some(keyword => message.includes(keyword))) {
-          matchedEntry = entry;
-          
-          if (entry.contextual && conversationMemory.lastTopic) {
-            const randomIndex = Math.floor(Math.random() * entry.responses[0].length);
-            matchedResponse = processResponse(entry.responses[0][randomIndex], conversationMemory);
-          } else if (!entry.contextual) {
-             const randomIndex = Math.floor(Math.random() * entry.responses[0].length);
-             matchedResponse = entry.responses[0][randomIndex];
-             
-             // Update memory for non-contextual keywords
-             if (entry.memoryUsage) {
-                if (entry.memoryUsage === 'lastTopic') {
-                    // Assuming the response will set the new topic
-                    // You might need to manually set this in a more complex setup
-                    // For now, let's derive it from the matched entry
-                    conversationMemory.lastTopic = entry.keywords[0]; 
-                    conversationMemory.lastLinkHint = "the website link"; 
-                    conversationMemory.lastCommand = "say 'play game'"; 
+            // First, look for a keyword match
+            for (const entry of knowledgeBase) {
+                const keywords = entry.keywords.map(k => k.toLowerCase());
+                if (keywords.some(keyword => message.includes(keyword))) {
+                    matchedEntry = entry;
+                    break;
                 }
-             }
-          }
-          break; // Exit loop after first match
+            }
+
+            // If a keyword was found, select a response
+            if (matchedEntry) {
+                 // Select a random response from a random sub-array
+                const responseSubArray = matchedEntry.responses[Math.floor(Math.random() * matchedEntry.responses.length)];
+                responseText = responseSubArray[Math.floor(Math.random() * responseSubArray.length)];
+
+                // If it's a contextual entry, use memory.
+                if (matchedEntry.contextual) {
+                    responseText = processResponse(responseText);
+                } else {
+                    // Update memory for non-contextual keywords
+                    if (matchedEntry.memoryUsage) {
+                        conversationMemory.lastTopic = matchedEntry.keywords[0]; 
+                        conversationMemory.lastLinkHint = "the games page"; 
+                        conversationMemory.lastCommand = "say 'play game'"; 
+                    }
+                }
+            }
         }
       }
 
-      // Fallback if no keyword is found
-      if (matchedResponse === null) {
+      // Final fallback if no keyword was found
+      if (responseText === null) {
           const fallbackEntry = knowledgeBase.find(e => e.keywords.includes("fallback"));
           if (fallbackEntry) {
               const randomIndex = Math.floor(Math.random() * fallbackEntry.responses[0].length);
-              matchedResponse = fallbackEntry.responses[0][randomIndex];
+              responseText = fallbackEntry.responses[0][randomIndex];
           } else {
-              matchedResponse = "I'm not sure I understand that. Can you rephrase?";
+              responseText = "I'm not sure I understand that. Can you rephrase?";
           }
       }
 
       // Speak the final response
-      speak(matchedResponse);
+      speak(responseText);
       messageBox.value = '';
     }
 
