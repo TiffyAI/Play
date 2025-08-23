@@ -157,52 +157,45 @@
   </div>
 
   <script>
+    let loadingTimer;
     let userName = localStorage.getItem('tiffy_user_name');
     let aiName = "TiffyAI";
     let isSpeaking = false;
-    let knowledgeBase = [];
-    let conversationMemory = {
-        lastTopic: null,
-        lastLinkHint: null,
-        lastCommand: null,
-        history: []
+
+    // Fixed the loading logic
+    document.getElementById("loadingStatus").innerText = `Waking up ${aiName}...`;
+
+    function hideLoadingScreen() {
+      const loadingScreen = document.getElementById("loadingScreen");
+      loadingScreen.style.opacity = "0";
+      setTimeout(() => { loadingScreen.style.display = "none"; }, 1000);
+      document.body.style.overflow = "auto";
+      if (!userName) {
+        speak("Hello, I am Tiffy. What is your name?", false);
+      } else {
+        speak(`Welcome back, ${userName}. How can I help you today?`, false);
+      }
+    }
+
+    // Set a timeout for the loading screen to hide no matter what
+    loadingTimer = setTimeout(hideLoadingScreen, 3500);
+
+    // This part is crucial for making the chat functional. It fetches the knowledge base once the window is fully loaded.
+    window.onload = function() {
+        document.getElementById("loadingProgress").style.display = "none";
+        setTimeout(() => {
+            document.getElementById("loadingStatus").innerText = "Tiffyverse is live.";
+            clearTimeout(loadingTimer);
+            setTimeout(hideLoadingScreen, 1500);
+        }, 500);
     };
-
-    // New, simplified loading script
-    window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        const loadingScreen = document.getElementById("loadingScreen");
-        loadingScreen.style.opacity = "0";
-        setTimeout(() => { loadingScreen.style.display = "none"; }, 1000);
-        document.body.style.overflow = "auto";
-        
-        if (!userName) {
-          speak("Hello, I am Tiffy. What is your name?", false);
-        } else {
-          speak(`Welcome back, ${userName}. How can I help you today?`, false);
-        }
-      }, 2000); // 2-second delay to ensure all DOM elements are loaded
-    });
-
-    // Load knowledge base
-    fetch('knowledge.json')
-      .then(response => response.json())
-      .then(data => {
-        knowledgeBase = data;
-        console.log("Knowledge base loaded successfully.");
-      })
-      .catch(error => {
-        console.error("Error loading knowledge.json:", error);
-      });
 
     function speak(text, updateHistory = true) {
       if (updateHistory) {
           addMessageToHistory(aiName, text, 'ai');
       }
-      
       const linkRegex = /\/g;
       const speechText = text.replace(linkRegex, '');
-      
       isSpeaking = true;
       const speech = new SpeechSynthesisUtterance(speechText);
       speech.volume = 1;
@@ -219,7 +212,6 @@
       const history = document.getElementById('chat-history');
       const messageDiv = document.createElement('div');
       messageDiv.classList.add('chat-message', type);
-
       const linkRegex = /\/g;
       let processedMessage = message.replace(linkRegex, (match, url) => {
           if (url.includes('knowledge.json')) {
@@ -227,13 +219,11 @@
           }
           return `<a href="${url}" target="_blank" style="color: #00f0ff; text-decoration: underline;">click here</a>`;
       });
-      
       if (type === 'ai') {
           messageDiv.innerHTML = `${sender}: ${processedMessage}`;
       } else {
           messageDiv.textContent = `${sender}: ${processedMessage}`;
       }
-      
       history.appendChild(messageDiv);
       history.scrollTop = history.scrollHeight;
     }
@@ -267,6 +257,35 @@
       }
     }
 
+    // Enter-to-send
+    document.getElementById('messageBox').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    if (userName) {
+      document.getElementById("userName").style.display = "none";
+      document.getElementById("changeName").style.display = "inline-block";
+    }
+
+    // TiffyAI Conversational Logic
+    let knowledgeBase = [];
+    let conversationMemory = {
+        lastTopic: null,
+        lastLinkHint: null,
+        lastCommand: null,
+        history: []
+    };
+
+    fetch('knowledge.json')
+      .then(response => response.json())
+      .then(data => {
+        knowledgeBase = data;
+        console.log("Knowledge base loaded successfully.");
+      })
+      .catch(error => {
+        console.error("Error loading knowledge.json:", error);
+      });
+
     function processResponse(response) {
         let processedResponse = response;
         if (conversationMemory.lastTopic) {
@@ -283,15 +302,12 @@
 
     function sendMessage() {
       if (isSpeaking) { return; }
-      
       const messageBox = document.getElementById('messageBox');
       const message = messageBox.value.toLowerCase().trim();
       if (!message) return;
 
       addMessageToHistory(userName || 'User', message, 'user');
-      
       conversationMemory.history.push({ type: 'user', text: message });
-
       let responseText = null;
 
       const nameMatch = message.match(/(my name is|i am) (.*)/);
@@ -360,7 +376,6 @@
     document.getElementById('messageBox').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') sendMessage();
     });
-
   </script>
 </body>
 </html>
