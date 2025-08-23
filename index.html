@@ -1,249 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TiffyAI</title>
   <style>
     body {
+      background: #0e0e0e;
+      color: #f1f1f1;
       font-family: Arial, sans-serif;
-      background-color: #000;
-      color: #fff;
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      text-align: center;
     }
     #chat {
-      width: 100%;
       max-width: 800px;
+      margin: auto;
       padding: 20px;
     }
     .bubble {
-      padding: 10px 15px;
-      border-radius: 12px;
-      margin: 6px 0;
+      margin: 10px 0;
+      padding: 12px 16px;
+      border-radius: 16px;
+      display: inline-block;
       max-width: 80%;
-      line-height: 1.4em;
     }
     .user {
-      background: #333;
-      align-self: flex-end;
+      background: #3a3a3a;
+      color: #fff;
+      text-align: right;
     }
     .tiffy {
-      background: #1e90ff;
+      background: #ff3cac;
+      background: linear-gradient(135deg, #ff3cac, #784ba0, #2b86c5);
       color: #fff;
-      align-self: flex-start;
-    }
-    #walletChooser {
-      display: none;
-      justify-content: center;
-      gap: 15px;
-      margin: 10px 0;
-    }
-    #price {
-      margin-top: 20px;
+      text-align: left;
     }
   </style>
 </head>
 <body>
-  <div id="chat"></div>
-  <div id="walletChooser">
-    <button onclick="launch('binance')">Binance</button>
-    <button onclick="launch('metamask')">MetaMask</button>
-    <button onclick="launch('trust')">TrustWallet</button>
-    <button onclick="openPresale()">Presale</button>
+  <div id="chat">
+    <div class="bubble tiffy">Hey hey, I’m TiffyAI 💎 Ready to dive into the Tiffyverse?</div>
   </div>
-  <div id="price"></div>
-  <div id="lastUpdated"></div>
 
-<script>
-/* ------------------------------
-   MEMORY + PERSONALITY ENGINE
---------------------------------*/
-let chatHistory = [];
-let lastTopic = "";
-let knowledgeBase = [];
-let knowledgeLoaded = false;
+  <script>
+    // --- MEMORY STATE ---
+    let lastTopic = "";
+    let lastCommand = "";
+    let lastLinkHint = "";
+    let userHistory = [];
 
-// Load knowledge.json fresh every session + cache
-async function loadKnowledge() {
-  try {
-    const res = await fetch("knowledge.json?_=" + Date.now());
-    knowledgeBase = await res.json();
-    knowledgeLoaded = true;
-    console.log("Knowledge loaded:", knowledgeBase.length, "entries");
-    localStorage.setItem("knowledgeCache", JSON.stringify(knowledgeBase));
-  } catch (err) {
-    console.warn("Could not fetch knowledge.json, using cached version");
-    const cache = localStorage.getItem("knowledgeCache");
-    if (cache) {
-      knowledgeBase = JSON.parse(cache);
-      knowledgeLoaded = true;
-    }
-  }
-}
+    // --- KNOWLEDGE STORAGE ---
+    let knowledgeData = [];
 
-// Save chat memory
-function saveChat(user, tiffy) {
-  chatHistory.push({ user, tiffy });
-  if (chatHistory.length > 20) chatHistory.shift();
-  localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
-  localStorage.setItem("lastTopic", lastTopic);
-}
-
-// Load memory on start
-function restoreMemory() {
-  const saved = localStorage.getItem("chatHistory");
-  if (saved) chatHistory = JSON.parse(saved);
-  lastTopic = localStorage.getItem("lastTopic") || "";
-}
-
-/* ------------------------------
-   SMART RESPONSE BUILDER
---------------------------------*/
-function findResponse(userInput) {
-  let input = userInput.toLowerCase();
-  let words = input.split(/\s+/);
-  let fallbackResponses = [
-    "You’re curious, aren’t you? Let me think on that… maybe try asking me about games, rewards, or keys.",
-    "I hear you — and I like where this is going. Want me to guide you deeper into the Tiffyverse?",
-    "That’s an interesting one… let’s tie it back to what we were just talking about."
-  ];
-
-  // Handle "yes" / "no"
-  if (input === "yes" || input === "yep" || input === "yeah") {
-    if (lastTopic) {
-      return `Perfect! Since we were on about **${lastTopic}**, let’s dive deeper.`;
-    } else {
-      return "Love that energy! Want me to show you something fun in the Tiffyverse?";
-    }
-  }
-  if (input === "no" || input === "nope" || input === "nah") {
-    return "Fair enough! But I’ll be here, tempting you with shiny rewards when you’re ready. 😉";
-  }
-
-  // Search knowledge.json by keywords
-  if (knowledgeLoaded) {
-    for (let entry of knowledgeBase) {
-      if (entry.keywords.some(k => input.includes(k))) {
-        lastTopic = entry.keywords[0]; // update memory
-        let tier = Math.floor(Math.random() * entry.responses.length);
-        let options = entry.responses[tier];
-        return options[Math.floor(Math.random() * options.length)];
+    async function loadKnowledge() {
+      try {
+        const res = await fetch("knowledge.json", { cache: "no-store" });
+        knowledgeData = await res.json();
+        console.log("Knowledge loaded:", knowledgeData.length, "entries");
+      } catch (e) {
+        console.warn("Knowledge fetch failed, fallback only");
+        knowledgeData = [];
       }
     }
-  }
 
-  // Fallback to lastTopic
-  if (lastTopic) {
-    return `Still thinking about **${lastTopic}**? Let’s keep going — I’ve got more to say on that.`;
-  }
-
-  // Default fallback
-  return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-}
-/* ------------------------------
-   CHAT + SPEECH HANDLING
---------------------------------*/
-function addMessage(text, sender = "tiffy") {
-  const chat = document.getElementById("chat");
-  const bubble = document.createElement("div");
-  bubble.classList.add("bubble", sender);
-  bubble.textContent = text;
-  chat.appendChild(bubble);
-  chat.scrollTop = chat.scrollHeight;
-
-  if (sender === "tiffy") {
-    speak(text);
-    if (chatHistory.length > 0) {
-      saveChat(chatHistory[chatHistory.length - 1].user, text);
+    loadKnowledge();
+    // --- CHAT RENDERING ---
+    function addBubble(text, sender = "tiffy") {
+      const div = document.createElement("div");
+      div.className = `bubble ${sender}`;
+      div.textContent = text;
+      document.getElementById("chat").appendChild(div);
+      window.scrollTo(0, document.body.scrollHeight);
     }
-  }
-}
 
-function handleUserInput(input) {
-  const userMessage = input.trim();
-  if (!userMessage) return;
+    // --- PERSONALITY Fallback Variations ---
+    const personalityFallbacks = {
+      cheeky: [
+        "Oh, now you’ve got me curious… wanna drop a hint?",
+        "Mmm, that one’s slippery — but I think you’re talking about {{lastTopic}}?",
+        "Don’t play coy, I *know* you’re circling back to {{lastTopic}}."
+      ],
+      playful: [
+        "Hehe, I love when you keep me guessing. Maybe you meant {{lastTopic}}?",
+        "Spill it, don’t make me decode human riddles all day.",
+        "Are you teasing me? Sounds like {{lastTopic}} again."
+      ],
+      informative: [
+        "I think you’re asking about {{lastTopic}} — want me to break it down?",
+        "Good timing, that ties straight into {{lastCommand}}.",
+        "Let me guess… you’re fishing for info on {{lastTopic}}?"
+      ]
+    };
 
-  addMessage(userMessage, "user");
-  const tiffyResponse = findResponse(userMessage);
-  addMessage(tiffyResponse, "tiffy");
-
-  saveChat(userMessage, tiffyResponse);
-}
-
-function speak(text) {
-  if (!window.speechSynthesis) return;
-  try {
-    window.speechSynthesis.cancel(); // reset voice
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1;
-    utterance.pitch = 1.1;
-    utterance.lang = "en-US";
-    window.speechSynthesis.speak(utterance);
-  } catch (err) {
-    console.warn("Speech synthesis failed silently:", err);
-  }
-}
-
-/* ------------------------------
-   DIRECT COMMANDS + LINKS
---------------------------------*/
-function launch(wallet) {
-  if (wallet === "binance") {
-    window.open("https://www.binance.com/", "_blank");
-  } else if (wallet === "metamask") {
-    window.open("https://metamask.io/", "_blank");
-  } else if (wallet === "trust") {
-    window.open("https://trustwallet.com/", "_blank");
-  }
-}
-
-function openPresale() {
-  window.open("https://www.pinksale.finance", "_blank");
-}
-
-/* ------------------------------
-   PRICE FETCH
---------------------------------*/
-async function fetchPrice() {
-  try {
-    const res = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT");
-    const data = await res.json();
-    document.getElementById("price").innerText =
-      "BNB Price: $" + parseFloat(data.price).toFixed(2);
-    document.getElementById("lastUpdated").innerText =
-      "Updated: " + new Date().toLocaleTimeString();
-  } catch (err) {
-    console.warn("Price fetch failed");
-  }
-}
-
-/* ------------------------------
-   INPUT HANDLING
---------------------------------*/
-document.addEventListener("keydown", e => {
-  if (e.key === "Enter") {
-    const lastBubble = document.querySelector("#chat .bubble.user:last-child");
-    if (!lastBubble || lastBubble.textContent.trim() !== e.target.value.trim()) {
-      handleUserInput(e.target.value);
-      e.target.value = "";
+    function pick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
     }
-  }
-});
 
-/* ------------------------------
-   INIT
---------------------------------*/
-(async function init() {
-  restoreMemory();
-  await loadKnowledge();
-  fetchPrice();
-  setInterval(fetchPrice, 60000);
+    // --- RESPONSE ENGINE ---
+    function getResponse(userInput) {
+      userHistory.push(userInput);
+      const lower = userInput.toLowerCase();
+      const words = lower.split(/\s+/);
 
-  addMessage("Hey there, I’m TiffyAI. Ready to explore the Tiffyverse with me?");
-})();
-</script>
+      // store last topic
+      lastTopic = words.slice(-3).join(" ");
+
+      // direct knowledge match
+      for (const entry of knowledgeData) {
+        if (entry.keywords.some(k => lower.includes(k))) {
+          lastCommand = entry.keywords[0];
+          const set = pick(entry.responses);
+          return pick(set);
+        }
+      }
+
+      // YES / NO logic
+      if (["yes", "yep", "yeah", "sure"].some(x => lower === x)) {
+        return lastTopic
+          ? `Cool — so back to ${lastTopic}, right?`
+          : "Yay, I like that energy!";
+      }
+      if (["no", "nope", "nah"].some(x => lower === x)) {
+        return lastTopic
+          ? `Okay, skipping ${lastTopic}. What do you want instead?`
+          : "Alright, your call. What’s next?";
+      }
+
+      // fallback with personality
+      const persona = pick(Object.keys(personalityFallbacks));
+      let response = pick(personalityFallbacks[persona]);
+      response = response.replace("{{lastTopic}}", lastTopic || "that");
+      response = response.replace("{{lastCommand}}", lastCommand || "something cool");
+      return response;
+    }
+
+    // --- INPUT SIMULATION ---
+    function simulateUserInput(input) {
+      addBubble(input, "user");
+      const reply = getResponse(input);
+      addBubble(reply, "tiffy");
+      // speech synthesis
+      const utter = new SpeechSynthesisUtterance(reply);
+      speechSynthesis.speak(utter);
+    }
+
+    // DEMO: Simulated inputs
+    setTimeout(() => simulateUserInput("how have you been"), 2000);
+    setTimeout(() => simulateUserInput("what game"), 6000);
+    setTimeout(() => simulateUserInput("yes"), 10000);
+  </script>
 </body>
 </html>
