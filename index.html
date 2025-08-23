@@ -157,36 +157,51 @@
   </div>
 
   <script>
-    let loadingTimer;
     let userName = localStorage.getItem('tiffy_user_name');
     let aiName = "TiffyAI";
     let isSpeaking = false;
+    let knowledgeBase = [];
+    let conversationMemory = {
+        lastTopic: null,
+        lastLinkHint: null,
+        lastCommand: null,
+        history: []
+    };
 
-    document.getElementById("loadingStatus").innerText = `Waking up ${aiName}...`;
+    // New, simplified loading script
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const loadingScreen = document.getElementById("loadingScreen");
+        loadingScreen.style.opacity = "0";
+        setTimeout(() => { loadingScreen.style.display = "none"; }, 1000);
+        document.body.style.overflow = "auto";
+        
+        if (!userName) {
+          speak("Hello, I am Tiffy. What is your name?", false);
+        } else {
+          speak(`Welcome back, ${userName}. How can I help you today?`, false);
+        }
+      }, 2000); // 2-second delay to ensure all DOM elements are loaded
+    });
 
-    function hideLoadingScreen() {
-      const loadingScreen = document.getElementById("loadingScreen");
-      loadingScreen.style.opacity = "0";
-      setTimeout(() => { loadingScreen.style.display = "none"; }, 1000);
-      document.body.style.overflow = "auto";
-      if (!userName) {
-        speak("Hello, I am Tiffy. What is your name?", false);
-      } else {
-        speak(`Welcome back, ${userName}. How can I help you today?`, false);
-      }
-    }
+    // Load knowledge base
+    fetch('knowledge.json')
+      .then(response => response.json())
+      .then(data => {
+        knowledgeBase = data;
+        console.log("Knowledge base loaded successfully.");
+      })
+      .catch(error => {
+        console.error("Error loading knowledge.json:", error);
+      });
 
-    // Fixed loading script: hides after a guaranteed 3.5 seconds
-    setTimeout(hideLoadingScreen, 3500);
-
-    // Modified speak function to handle links and chat history in one go
     function speak(text, updateHistory = true) {
       if (updateHistory) {
           addMessageToHistory(aiName, text, 'ai');
       }
       
       const linkRegex = /\/g;
-      const speechText = text.replace(linkRegex, ''); // Text for speech synthesis
+      const speechText = text.replace(linkRegex, '');
       
       isSpeaking = true;
       const speech = new SpeechSynthesisUtterance(speechText);
@@ -200,13 +215,11 @@
       };
     }
 
-    // New unified addMessageToHistory function that handles links
     function addMessageToHistory(sender, message, type) {
       const history = document.getElementById('chat-history');
       const messageDiv = document.createElement('div');
       messageDiv.classList.add('chat-message', type);
 
-      // Check for and replace with clickable links
       const linkRegex = /\/g;
       let processedMessage = message.replace(linkRegex, (match, url) => {
           if (url.includes('knowledge.json')) {
@@ -237,9 +250,6 @@
       }
     }
 
-    /***********************
-     * Microphone STT
-     ***********************/
     function startMic() {
       try {
         const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -257,41 +267,6 @@
       }
     }
 
-    // Enter-to-send
-    document.getElementById('messageBox').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') sendMessage();
-    });
-
-    // cold start: if userName present, adjust UI
-    if (userName) {
-      document.getElementById("userName").style.display = "none";
-      document.getElementById("changeName").style.display = "inline-block";
-    }
-
-    /***********************
-     * TiffyAI Conversational Logic
-     ***********************/
-
-    // Load knowledge base from the JSON file
-    let knowledgeBase = [];
-    let conversationMemory = {
-        lastTopic: null,
-        lastLinkHint: null,
-        lastCommand: null,
-        history: []
-    };
-
-    fetch('knowledge.json')
-      .then(response => response.json())
-      .then(data => {
-        knowledgeBase = data;
-        console.log("Knowledge base loaded successfully.");
-      })
-      .catch(error => {
-        console.error("Error loading knowledge.json:", error);
-      });
-
-    // Helper function to process responses with placeholders
     function processResponse(response) {
         let processedResponse = response;
         if (conversationMemory.lastTopic) {
@@ -306,7 +281,6 @@
         return processedResponse;
     }
 
-    // New sendMessage logic
     function sendMessage() {
       if (isSpeaking) { return; }
       
