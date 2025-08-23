@@ -176,15 +176,8 @@
       }
     }
 
-    // Set a timeout for the loading screen in case of a slow connection
-    loadingTimer = setTimeout(hideLoadingScreen, 3000);
-
-    // No need for window.onload, just run the logic after a slight delay
-    setTimeout(() => {
-        document.getElementById("loadingStatus").innerText = "Tiffyverse is live.";
-        clearTimeout(loadingTimer);
-        setTimeout(hideLoadingScreen, 1500);
-    }, 500);
+    // Fixed loading script: hides after a guaranteed 3.5 seconds
+    setTimeout(hideLoadingScreen, 3500);
 
     // Modified speak function to handle links and chat history in one go
     function speak(text, updateHistory = true) {
@@ -216,7 +209,6 @@
       // Check for and replace with clickable links
       const linkRegex = /\/g;
       let processedMessage = message.replace(linkRegex, (match, url) => {
-          // If the URL is just knowledge.json, we don't make it a clickable link
           if (url.includes('knowledge.json')) {
               return ``;
           }
@@ -324,19 +316,16 @@
 
       addMessageToHistory(userName || 'User', message, 'user');
       
-      // Add user message to history
       conversationMemory.history.push({ type: 'user', text: message });
 
       let responseText = null;
 
-      // Handle name-setting
-      const nameMatch = message.match(/my name is (.*)/);
+      const nameMatch = message.match(/(my name is|i am) (.*)/);
       if (nameMatch) {
-          userName = nameMatch[1];
+          userName = nameMatch[2].trim();
           localStorage.setItem('tiffy_user_name', userName);
           responseText = `Hello, ${userName}! It's a pleasure to meet you.`;
       } else {
-        // Handle "yes" and "no" special cases
         if (message === 'yes' && conversationMemory.history.length > 1) {
             const lastBotMessage = conversationMemory.history[conversationMemory.history.length - 2].text.toLowerCase();
             
@@ -351,11 +340,9 @@
             responseText = "Alright, no pressure. Let me know if you change your mind.";
         }
         
-        // General keyword matching if no special case was hit
         if (responseText === null) {
             let matchedEntry = null;
 
-            // First, look for a keyword match
             for (const entry of knowledgeBase) {
                 const keywords = entry.keywords.map(k => k.toLowerCase());
                 if (keywords.some(keyword => message.includes(keyword))) {
@@ -364,17 +351,13 @@
                 }
             }
 
-            // If a keyword was found, select a response
             if (matchedEntry) {
-                 // Select a random response from a random sub-array
-                const responseSubArray = matchedEntry.responses[Math.floor(Math.random() * matchedEntry.responses.length)];
+                 const responseSubArray = matchedEntry.responses[Math.floor(Math.random() * matchedEntry.responses.length)];
                 responseText = responseSubArray[Math.floor(Math.random() * responseSubArray.length)];
 
-                // If it's a contextual entry, use memory.
                 if (matchedEntry.contextual) {
                     responseText = processResponse(responseText);
                 } else {
-                    // Update memory for non-contextual keywords
                     if (matchedEntry.memoryUsage) {
                         conversationMemory.lastTopic = matchedEntry.keywords[0]; 
                         conversationMemory.lastLinkHint = "the games page"; 
@@ -385,7 +368,6 @@
         }
       }
 
-      // Final fallback if no keyword was found
       if (responseText === null) {
           const fallbackEntry = knowledgeBase.find(e => e.keywords.includes("fallback"));
           if (fallbackEntry) {
@@ -396,12 +378,10 @@
           }
       }
 
-      // Speak the final response
       speak(responseText);
       messageBox.value = '';
     }
 
-    // Attach the new sendMessage to the button click and enter key events
     document.getElementById('sendButton').onclick = sendMessage;
     document.getElementById('messageBox').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') sendMessage();
