@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TiffyAI Interface</title>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+
+    /* Loading Screen with drop.gif behind Tiffy */
+    #loadingScreen {
+      position: absolute;
+      top:0;left:0;
+      width:100%;height:100%;
+      background:#000 url("drop.gif") center/cover no-repeat;
+      color:white;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index:20000;
+      transition: opacity 1s ease;
+    }
+    #loadingScreen img {
+      width:200px;
+      border-radius:50%;
+      box-shadow:0 0 30px #00f0ff;
+      margin-bottom:10px;
+    }
+    #loadingScreen h2, #loadingScreen p {
+      font-family:sans-serif;
+      text-align:center;
+      margin:6px 0;
+    }
+    .glass-input {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 10px;
+      border-radius: 12px;
+      color: white;
+      margin: 8px 0;
+      font-size: 14px;
+      width: 220px;
+      text-align: center;
+    }
+    #startTiffy {
+      margin-top:8px;
+      padding:10px 18px;
+      border:none;
+      border-radius:10px;
+      background:linear-gradient(135deg, #00f0ff, #0080ff);
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
+      box-shadow:0 0 12px #00f0ff;
+    }
+    #changeName {
+      margin-left:8px;
+      padding:8px 10px;
+      border-radius:8px;
+      background: rgba(255,255,255,0.12);
+      cursor: pointer;
+      display:none;
+    }
+
+    .talking { animation: lipMove 0.28s infinite alternate; transform-origin: 50% 60%; }
+    @keyframes lipMove {
+      from { transform: scale(1,1); }
+      to { transform: scale(1,0.92); }
+    }
+
+    /* Glass input panel */
+    .glass-panel {
+      position: absolute;
+      bottom: 40px;
+      left: 30%;
+      transform: translateX(-50%);
+      width: 55%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 12px;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      z-index: 9999;
+    }
+    input[type="text"] {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.12);
+      border: none;
+      color: white;
+      padding: 8px;
+      border-radius: 8px;
+    }
+    button {
+      background: rgba(255,255,255,0.12);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 12px;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* Visualization bars */
+    .visualizer {
+      position: absolute;
+      bottom: 92px;
+      left: 30%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 4px;
+      height: 22px;
+      align-items: flex-end;
+      z-index: 10000;
+    }
+    .bar { width: 5px; background: #00f0ff; border-radius: 3px; height: 6px; animation: bounce 0.6s infinite ease-in-out; }
+    .bar:nth-child(2){ animation-delay: 0.08s }
+    .bar:nth-child(3){ animation-delay: 0.16s }
+    .bar:nth-child(4){ animation-delay: 0.24s }
+    .bar:nth-child(5){ animation-delay: 0.32s }
+    @keyframes bounce { 0%,100%{height:6px} 50%{height:22px} }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <!-- Loading screen -->
+  <div id="loadingScreen">
+    <img id="tiffyFace" src="face.png" alt="Tiffy Face">
+    <h2 id="greetingText">Hello, I’m TiffyAI 👋</h2>
+    <p>Choose my voice, tell me your name, and I’ll guide you through the whole ecosystem.</p>
+
+    <div style="display:flex; gap:8px; align-items:center;">
+      <select id="voiceSelect" class="glass-input" style="width:260px;"></select>
+      <button id="refreshVoices">🔄</button>
+    </div>
+
+    <input id="userName" class="glass-input" placeholder="Enter your name..." />
+    <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+      <button id="startTiffy">🚀 Start</button>
+      <button id="changeName">✏️ Change Name</button>
+    </div>
+  </div>
+
+  <a-scene>
+    <a-assets>
+      <video id="bgvideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4"></video>
+    </a-assets>
+    <a-sky id="background" src="#bgvideo"></a-sky>
+    <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
+  </a-scene>
+
+  <!-- Glass interface -->
+  <div class="glass-panel" id="chatPanel" style="display:none;">
+    <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="startMic()">🎤</button>
+  </div>
+
+  <!-- Visualization -->
+  <div class="visualizer hidden" id="viz">
+    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+  </div>
+
+  <script>
+    /***********************
+     *  Arrays (your originals)
+     ***********************/
+    const greetings = [
+      "Well hello sunshine 🌞, I’ve been waiting for you!",
+      "Look who’s back! Let’s dive into some fun!",
+      "Hey superstar ✨ ready to explore the Tiffy world again?",
+      "You made it! I was just charging my circuits for you ⚡"
+    ];
+    const ecosystemPromos = [
+      "Hey! Want to try the games or claim some TIFFY tokens before the airdrop ends?",
+      "The ecosystem's growing fast… have you claimed your airdrop yet?",
+      "TIFFY tokens presale prices looking fabulous right now! 61% off from Pancakeswaps price at the moment",
+      "Maybe test a game, then snag some TIFFY on the website while the presale lasts."
+    ];
+
+    /***********************
+     * Ecosystem entries (kept as-is)
+     ***********************/
+    const backgrounds = {
+      "tetris": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
+        responses: [
+          "Stacking blocks… welcome to the Tetris world!",
+          "Time to make those rows — Tiffy style!",
+          "Careful, don't let the tower fall!",
+          "Blocks everywhere, lets' make it rain shapes!"
+        ],
+        link: "https://tiffyai.github.io/Tetris"
+      },
+      "snake": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/play.mp4",
+        responses: [
+          "Slithering into the treasure world… watch your steps",
+          "Watch out, the snake world bites!",
+          "Hissss... welcome to the jungle treasure maze.",
+          "Keep your eyes sharp, things move fast here!"
+        ],
+        link: "https://tiffyai.github.io/Snake"
+      },
+      "shoot": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        responses: [
+          "Locked and loaded… entering battle mode",
+          "Hope your aim's good, this one gets wild!",
+          "Pew pew time! Ready, steady, fire!",
+          "Careful — sparks and feathers will fly in this arena! catch the coins too"
+        ],
+        link: "https://tiffyai.github.io/Angry-coins"
+      },
+      "angry": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        responses: [
+          "Locked and loaded… entering battle mode",
+          "Hope your aim's good, this one gets wild!",
+          "Pew pew time! Ready, steady, fire!",
+          "Careful — sparks and feathers will fly in this arena! catch the coins too"
+        ],
+        link: "https://tiffyai.github.io/Angry-coins"
+      },
+      "birds": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        responses: [
+          "Locked and loaded… entering battle mode",
+          "Hope your aim's good, this one gets wild!",
+          "Pew pew time! Ready, steady, fire!",
+          "Careful — sparks and feathers will fly in this arena! catch the coins too"
+        ],
+        link: "https://tiffyai.github.io/Angry-coins"
+      },
+      "blocks": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
+        responses: [
+          "Stacking blocks… welcome to the Tetris world!",
+          "Time to make those rows — Tiffy style!",
+          "Careful, don't let the tower fall!",
+          "Blocks everywhere, let's make it rain shapes!"
+        ],
+        link: "https://tiffyai.github.io/Tetris"
+      },
+      "menu": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
+        responses: [
+          "Back to home base? Fine, but only because you asked so sweetly!",
+          "Running home to mama… I mean menu. Let's go!",
+          "Ohhh I see… someone's afraid of adventure. Menu loading!",
+          "Pfft, already? You barely lasted out there — okay, menu time!",
+          "Games, tokens, fun — the whole Tiffyverse at your fingertips!",
+          "Don't just stand there… explore me (the ecosystem, I mean!)",
+          "You know what's better than playing games? Playing games *and* earning TIFFY!",
+          "Every menu choice is a doorway… and some lead to treasure maps!",
+          "The menu isn't just buttons — it's basically a cheat code to the Tiffy multiverse!",
+          "Quick question… games first or do we go token hunting like a boss?",
+          "The airdrop is still open, and rumor has it ${userName}ey, fast fingers win big!",
+          "Psst… PancakeSwap is looking mighty sweet right now, half-price TIFFY anyone?"
+        ],
+        link: "https://tiffyai.github.io/Dream-Menu"
+      },
+      "main": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
+        responses: [
+          "Back to home base? Fine, but only because you asked so sweetly!",
+          "Running home to mama, I mean menu. Let's go!",
+          "Ohhh I see… someone's afraid of adventure. Menu loading!",
+          "Pfft, already? You barely lasted out there , okay, menu time!",
+          "Games and tokens fun, the whole Tiffyverse at your fingertips!",
+          "Dont' just stand there, explore me (the ecosystem, I mean!)",
+          "You know whats' better than playing games? Playing games *and* earning TIFFY!",
+          "Every menu choice is a doorway, and some lead to treasure maps!",
+          "The menu isn't just buttons — it's basically a cheat code to the Tiffy multiverse!",
+          "Quick question… games first or do we go token hunting like a boss?",
+          "The airdrop is still open, and rumor has it ${userName}ey, fast fingers win big!",
+          "Psst… PancakeSwap is looking mighty sweet right now, half-price TIFFY anyone?"
+        ],
+        link: "https://tiffyai.github.io/Dream-Menu"
+      },
+      "withdraw": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
+        responses: [
+          "Pulling out some TIFFY? Just don't forget to stack more before the presale ends!",
+          "Withdraws are nice, but imagine doubling it after the airdrop!",
+          "Cash out today, come back tomorrow for more games — that's the Tiffy cycle!",
+          "Every time you withdraw, I get a little prouder of you!"
+        ],
+        link: "https://tiffyai.github.io/Offline-/"
+      },
+      "sphere": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        responses: [
+          "released and all yours, entering flow mode",
+          "Hope your aim's good, this one gets wild!",
+          "collection time! Ready, steady, letting it go!",
+          "Careful — sparks and feathers will fly in this arena! catch the coins too",
+          "Ahhh, the Motion Power Sphere, only the chosen ones ask for it. You're leveling up, ${userName}!",
+          "Motion Power Sphere? You mean my favorite toy, Here, but handle it like a pro hey.",
+          "That's a bold request, ${userName}ey, the Sphere isn't for the faint of heart",
+          "Charging up the Sphere now , hold tight, this might tingle.",
+          "Legend says the Sphere only responds to legends, guess that's you, superstar!",
+          "The Motion Power Sphere is yours — don't blow up the ecosystem with it!",
+          "Ohhh, someone's aiming for ultimate power, The Sphere's in your hands now.",
+          "Energy locked, Motion engaged, Sphere deployed!",
+          "Your vibe just matched the Sphere's frequency, ${userName} — that's rare."
+        ],
+        link: "https://tiffyai.github.io/Pat-Pat-Motion"
+      },
+      "info": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        responses: [
+          "Ready for the deep dive? Let's open up the vault — socials, whitepaper, vision… all the juicy bits about TiffyAI.",
+          "Ooooh, curious type huh? Let me pull up the secrets of our world… Facebook, Twitter, audits, all wrapped in one neat package.",
+          "Info mode activated — time to see how TiffyAI rolls behind the curtain. Come peek at the socials and whitepaper!",
+          "So you want the backstory? Well, lucky you, we've got socials, audits, and a vision that'll blow your mind. Opening it now.",
+          "Heeey smart one… I knew you'd ask for this. The roadmap, socials, audit receipts, whitepaper — all in one place. Let's go!",
+          "Behind every cheeky AI is a solid foundation — socials, Sourcify-verification, and the big vision. Opening intro page for you now.",
+          "Want to know what makes me tick? Facebook, Twitter, whitepaper, and the master plan are all waiting in the intro link. Let's peek!",
+          "Aha, info-hunter spotted… socials, audits, whitepaper, even the vision — everything you need to flex your knowledge."
+        ],
+        link: "https://tiffyai.github.io/Intro"
+      },
+      "more": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        responses: [
+          "Ready for the deep dive? Let's open up the vault — socials, whitepaper, vision… all the juicy bits about TiffyAI.",
+          "Ooooh, curious type huh? Let me pull up the secrets of our world… Facebook, Twitter, audits, all wrapped in one neat package.",
+          "Info mode activated — time to see how TiffyAI rolls behind the curtain. Come peek at the socials and whitepaper!",
+          "So you want the backstory? Well, lucky you, we've got socials, audits, and a vision that'll blow your mind. Opening it now.",
+          "Heeey smart one, I knew you'd ask for this. The roadmap, socials, audit receipts, whitepaper — all in one place. Let's go!",
+          "Behind every cheeky AI is a solid foundation — socials, Sourcify-verification, and the big vision. Opening intro page for you now.",
+          "Want to know what makes me tick? Facebook, Twitter, whitepaper, and the master plan are all waiting in the intro link. Let's peek!",
+          "Aha, info-hunter spotted… socials, audits, whitepaper, even the vision — everything you need to flex your knowledge."
+        ],
+        link: "https://tiffyai.github.io/Intro"
+      },
+      "explain": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        responses: [
+          "Ready for the deep dive? Let's open up the vault — socials, whitepaper, vision… all the juicy bits about TiffyAI.",
+          "Ooooh, curious type huh? Let me pull up the secrets of our world… Facebook, Twitter, audits, all wrapped in one neat package.",
+          "Info mode activated — time to see how TiffyAI rolls behind the curtain. Come peek at the socials and whitepaper!",
+          "So you want the backstory? Well, lucky you, we've got socials, audits, and a vision that'll blow your mind. Opening it now.",
+          "Heeey smart one, I knew you'd ask for this. The roadmap, socials, audit receipts, whitepaper — all in one place. Let's go!",
+          "Behind every cheeky AI is a solid foundation — socials, Sourcify-verification, and the big vision. Opening intro page for you now.",
+          "Want to know what makes me tick? Facebook, Twitter, whitepaper, and the master plan are all waiting in the intro link. Let's peek!",
+          "Aha, info-hunter spotted… socials, audits, whitepaper, even the vision — everything you need to flex your knowledge."
+        ],
+        link: "https://tiffyai.github.io/Intro"
+      },
+      "begin": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        responses: [
+          "Ready for the deep dive? Let's open up the vault — socials, whitepaper, vision… all the juicy bits about TiffyAI.",
+          "Ooooh, curious type huh? Let me pull up the secrets of our world… Facebook, Twitter, audits, all wrapped in one neat package.",
+          "Info mode activated — time to see how TiffyAI rolls behind the curtain. Come peek at the socials and whitepaper!",
+          "So you want the backstory? Well, lucky you, we've got socials, audits, and a vision that'll blow your mind. Opening it now.",
+          "Heeey smart one, I knew you'd ask for this. The roadmap, socials, audit receipts, whitepaper — all in one place. Let's go!",
+          "Behind every cheeky AI is a solid foundation — socials, Sourcify-verification, and the big vision. Opening intro page for you now.",
+          "Want to know what makes me tick? Facebook, Twitter, whitepaper, and the master plan are all waiting in the intro link. Let's peek!",
+          "Aha, info-hunter spotted… socials, audits, whitepaper, even the vision — everything you need to flex your knowledge."
+        ],
+        link: "https://tiffyai.github.io/Intro"
+      },
+      "start": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        responses: [
+          "Ready for the deep dive? Let's open up the vault — socials, whitepaper, vision… all the juicy bits about TiffyAI.",
+          "Ooooh, curious type huh? Let me pull up the secrets of our world… Facebook, Twitter, audits, all wrapped in one neat package.",
+          "Info mode activated — time to see how TiffyAI rolls behind the curtain. Come peek at the socials and whitepaper!",
+          "So you want the backstory? Well, lucky you… we've got socials, audits, and a vision that'll blow your mind. Opening it now.",
+          "Heeey smart one, I knew you'd ask for this. The roadmap, socials, audit receipts, whitepaper — all in one place. Let's go!",
+          "Behind every cheeky AI is a solid foundation — socials, Sourcify-verification, and the big vision. Opening intro page for you now.",
+          "Want to know what makes me tick? Facebook, Twitter, whitepaper, and the master plan are all waiting in the intro link. Let's peek!",
+          "Aha, info-hunter spotted, socials, audits, whitepaper, even the vision — everything you need to flex your knowledge."
+        ],
+        link: "https://tiffyai.github.io/Intro"
+      },
+      "telegram bot": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        responses: [
+          "Ohhh you wanna get closer to me? , Slide into my Telegram bot, darling.",
+          "You know what,s better than chatting here? Talking to me directly on Telegram.",
+          "Meet my sassier twin on Telegram",
+          "Want me in your pocket 24,7? Hit up my bot.",
+          "Careful, my Telegram bot is addictive, Don't say I didn't warn you",
+          "Ready for the VIP lounge? Join me on Telegram",
+          "Want to know what makes me tick? find my naughtier self here, look for AI",
+          "Aha, info-hunter spotted, socials, audits, whitepaper, even the vision — everything you need to flex your knowledge. Say the word"
+        ],
+        link: "https://t.me/TiffyAI_Bot"
+      },
+      "telegram channel": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/fin.mp4",
+        responses: [
+          "Ohhh you wanna get closer to me? Slide into my Telegram bot, darling.",
+          "You know what's better than chatting here? Talking to me directly on Telegram.",
+          "Meet my sassier twin on Telegram",
+          "Want me in your pocket 24,7? Hit up my bot.",
+          "Careful, my Telegram bot is addictive, Don't say I didn't warn you",
+          "Ready for the VIP lounge? Join me on Telegram",
+          "Want to know what makes me tick? find my naughtier self here, look for AI",
+          "Aha, info-hunter spotted… socials, audits, whitepaper, even the vision — everything you need to flex your knowledge. Say the word"
+        ],
+        link: "https://t.me/TiffyAI_Bot"
+      },
+      "website": {
+        url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/drop.gif",
+        responses: [
+          "Alright superstar, let's head to the official TiffyAI website. Time to see where the magic really happens.",
+          "Taking you to the heart of TiffyAI. The official website is where the vision lives.",
+          "You got it. Loading up the official TiffyAI home base for you right now.",
+          "Boom. Straight to the source. Let's roll into the official TiffyAI website."
+       ],
+       link: "https://www.tiffyai.co.za"
+      }
+    };
+
+    /***********************
+     * State & Memory
+     ***********************/
+    let selectedVoice = null;
+    let voiceReady = false;
+    let userName = localStorage.getItem("tiffyUserName") || "";
+    // conversation memory + last bot claim for continuity
+    let history = JSON.parse(localStorage.getItem("tiffyMemory") || "[]");
+    let lastBotClaim = localStorage.getItem("tiffyLastClaim") || ""; // e.g., "new game: Starship TiffyAI"
+    function saveMemory() { localStorage.setItem("tiffyMemory", JSON.stringify(history)); }
+    function saveClaim(txt){ lastBotClaim = txt || ""; localStorage.setItem("tiffyLastClaim", lastBotClaim); }
+
+    // nickname helper
+    function nickname(name) {
+      if (!name) return "friend";
+      if (Math.random() < 0.33) return name + "ey";
+      return name;
+    }
+
+    /***********************
+     * Voice setup (silent)
+     ***********************/
+    function populateVoices() {
+      const select = document.getElementById("voiceSelect");
+      const voices = speechSynthesis.getVoices() || [];
+      select.innerHTML = "";
+      for (let i=0;i<voices.length;i++){
+        const v = voices[i];
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = `${v.name} (${v.lang})`;
+        select.appendChild(opt);
+      }
+      if (voices.length>0) {
+        const idx = select.selectedIndex >= 0 ? select.selectedIndex : 0;
+        select.selectedIndex = idx;
+        selectedVoice = voices[idx];
+      }
+    }
+    function ensureVoicesLoad(timeout=3000) {
+      populateVoices();
+      let waited = 0;
+      const iv = setInterval(()=>{
+        const voices = speechSynthesis.getVoices();
+        if (voices && voices.length>0) {
+          populateVoices();
+          clearInterval(iv);
+        }
+        waited += 200;
+        if (waited >= timeout) clearInterval(iv);
+      }, 200);
+    }
+    document.getElementById("refreshVoices").addEventListener("click", populateVoices);
+    window.addEventListener("load", () => {
+      ensureVoicesLoad(2500);
+      if (userName) {
+        document.getElementById("userName").style.display = "none";
+        document.getElementById("changeName").style.display = "inline-block";
+        const g = greetings[Math.floor(Math.random()*greetings.length)];
+        document.getElementById("greetingText").innerText = g.replace("{name}", nickname(userName));
+      }
+      initKnowledge(); // auto-refresh knowledge each session
+    });
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = populateVoices;
+    }
+
+    /***********************
+     * Speak with silent failover
+     ***********************/
+    function speak(text, callback=null) {
+      const viz = document.getElementById("viz");
+      const face = document.getElementById("tiffyFace");
+      viz.classList.remove("hidden");
+      if (face) face.classList.add("talking");
+
+      if (!('speechSynthesis' in window)) {
+        setTimeout(()=> {
+          viz.classList.add("hidden");
+          if (face) face.classList.remove("talking");
+          if (callback) callback();
+        }, 800);
+        return;
+      }
+
+      const msg = new SpeechSynthesisUtterance(text);
+      msg.rate = 1; msg.pitch = 1; msg.volume = 1; msg.lang = "en-US";
+      try {
+        const voices = speechSynthesis.getVoices();
+        const sel = document.getElementById("voiceSelect");
+        if (sel && sel.value !== undefined && voices[sel.value]) msg.voice = voices[sel.value];
+        else if (selectedVoice) msg.voice = selectedVoice;
+      } catch {}
+
+      const wordCount = (text || "").trim().split(/\s+/).filter(Boolean).length || 1;
+      const estimatedMs = Math.max(800, Math.min(10000, Math.round(wordCount * 160)));
+      const fallbackMs = estimatedMs + 800;
+      let done = false;
+      const finish = () => {
+        if (done) return; done = true;
+        viz.classList.add("hidden");
+        if (face) face.classList.remove("talking");
+        if (callback) callback();
+      };
+      const fallback = setTimeout(finish, fallbackMs);
+      msg.onend = () => { clearTimeout(fallback); finish(); };
+      msg.onerror = () => { clearTimeout(fallback); finish(); };
+
+      try { speechSynthesis.cancel(); speechSynthesis.speak(msg); }
+      catch { clearTimeout(fallback); finish(); }
+    }
+
+    /***********************
+     * Start button
+     ***********************/
+    document.getElementById("startTiffy").addEventListener("click", () => {
+      const nameEl = document.getElementById("userName");
+      const typed = (nameEl && nameEl.value) ? nameEl.value.trim() : "";
+      if (typed) {
+        userName = typed;
+        localStorage.setItem("tiffyUserName", userName);
+        nameEl.style.display = "none";
+        document.getElementById("changeName").style.display = "inline-block";
+      }
+      const voices = speechSynthesis.getVoices();
+      const select = document.getElementById("voiceSelect");
+      if (voices && voices.length>0 && select.selectedIndex >= 0) {
+        selectedVoice = voices[select.selectedIndex];
+      } else { selectedVoice = null; }
+      voiceReady = true;
+
+      const greet = greetings[Math.floor(Math.random()*greetings.length)];
+      const pickName = userName ? nickname(userName) : null;
+      const introLine = userName
+        ? `${greet} Hello ${pickName}, I’ll guide you through the ecosystem.`
+        : "Hey, I’d love to know your name so I can guide you better. Please type it in the name box above and press Start again.";
+
+      speak(introLine, () => {
+        if (userName) {
+          setTimeout(()=> {
+            document.getElementById("loadingScreen").style.opacity = "0";
+            setTimeout(()=> {
+              document.getElementById("loadingScreen").style.display = "none";
+              document.getElementById("chatPanel").style.display = "flex";
+            }, 800);
+          }, 600);
+          history.push({role:"tiffy", text:introLine});
+          saveMemory();
+        }
+      });
+    });
+
+    document.getElementById("changeName").addEventListener("click", () => {
+      document.getElementById("userName").style.display = "inline-block";
+      document.getElementById("userName").value = userName || "";
+      document.getElementById("changeName").style.display = "none";
+    });
+
+    /***********************
+     * Knowledge Engine (auto-refresh + cache + silent fallback)
+     ***********************/
+    const KNOWLEDGE_URL = "https://tiffyai.github.io/Play/knowledge.json";
+    const KNOW_CACHE_KEY = "tiffyKnowledgeCache";
+    const KNOW_CACHE_AT = "tiffyKnowledgeCacheAt";
+    const KNOW_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
+
+    let knowledge = []; // array of {keywords, personality, responses:[[line1,line2], ...]}
+
+    function initKnowledge() {
+      const now = Date.now();
+      const cached = localStorage.getItem(KNOW_CACHE_KEY);
+      const cachedAt = parseInt(localStorage.getItem(KNOW_CACHE_AT) || "0", 10);
+      if (cached) {
+        try { knowledge = JSON.parse(cached) || []; } catch { knowledge = []; }
+      }
+      // refresh on each session (silent). If it fails, keep cache.
+      fetchWithTimeout(KNOWLEDGE_URL, { cache: "no-cache" }, 4500)
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(data => {
+          if (Array.isArray(data)) {
+            knowledge = data;
+            localStorage.setItem(KNOW_CACHE_KEY, JSON.stringify(data));
+            localStorage.setItem(KNOW_CACHE_AT, String(now));
+          }
+        })
+        .catch(()=>{ /* silent */ });
+
+      // If no cache and fetch failed, keep empty -> engine will gracefully fallback.
+    }
+
+    function fetchWithTimeout(url, opts={}, timeout=5000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+      return fetch(url, { ...opts, signal: controller.signal })
+        .finally(() => clearTimeout(id));
+    }
+
+    // Simple normalization
+    function norm(s){ return (s||"").toLowerCase().replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim(); }
+
+    // Extract last N words from a string
+    function lastNWords(s, n=3){
+      const arr = norm(s).split(" ").filter(Boolean);
+      return arr.slice(-n);
+    }
+
+    // Score a knowledge item by keyword hits & trigram continuity
+    function scoreKnowledgeItem(item, msg, lastUser, lastClaim){
+      let score = 0;
+      const msgTokens = new Set(norm(msg).split(" ").filter(Boolean));
+      const lastTokens = new Set(lastNWords(lastUser,3));
+      const claimTokens = new Set(lastNWords(lastClaim,4));
+
+      // keyword hits
+      if (Array.isArray(item.keywords)) {
+        for (const k of item.keywords) {
+          const kk = norm(k);
+          if (kk && (msgTokens.has(kk) || lastTokens.has(kk) || claimTokens.has(kk))) score += 3;
+        }
+      }
+
+      // trigram continuity: if last 3 of user appear together in any response variant, boost
+      const last3 = lastNWords(lastUser,3).join(" ");
+      if (last3) {
+        for (const pair of (item.responses || [])) {
+          const joined = norm((pair||[]).join(" "));
+          if (joined.includes(last3)) { score += 4; break; }
+        }
+      }
+
+      // claim continuity: if item mentions words from last claim, boost
+      const lc = norm(lastClaim);
+      if (lc) {
+        for (const pair of (item.responses || [])) {
+          const joined = norm((pair||[]).join(" "));
+          if (lc && joined.includes(lastNWords(lc,3).join(" "))) { score += 2; break; }
+        }
+      }
+      return score;
+    }
+
+    // Pick a response pair from knowledge
+    function pickKnowledgeReply(userMsg) {
+      if (!Array.isArray(knowledge) || knowledge.length === 0) return null;
+      const lastUserTurn = [...history].reverse().find(h=>h.role !== "tiffy")?.text || "";
+      let best = null, bestScore = -1;
+
+      for (const item of knowledge) {
+        const sc = scoreKnowledgeItem(item, userMsg, lastUserTurn, lastBotClaim);
+        if (sc > bestScore) { bestScore = sc; best = item; }
+      }
+      if (!best || !Array.isArray(best.responses) || best.responses.length===0) return null;
+
+      // choose a pair, then stitch into one line with a little variability
+      const pair = best.responses[Math.floor(Math.random()*best.responses.length)];
+      const nick = nickname(userName);
+      const line1 = (pair[0]||"").replace("${userName}", nick);
+      const line2 = (pair[1]||"").replace("${userName}", nick);
+
+      // Lightweight persona garnish
+      const joiners = [
+        `${line1} ${line2}`,
+        `${line1} — ${line2}`,
+        `${line1}. ${line2}`
+      ];
+      let out = joiners[Math.floor(Math.random()*joiners.length)];
+
+      // Update claim if the line "promises" something (basic heuristic)
+      if (/new game|try this|i can|let me|i’ll|i will|let's/i.test(out)) {
+        saveClaim(out.substring(0, 160)); // keep it short
+      }
+      return out;
+    }
+
+    /***********************
+     * Fallback small talk using recent memory + promos
+     ***********************/
+    function memorySmallTalk() {
+      const recent = history.slice(-3).map(h => `${h.role}: ${h.text}`).join(" | ") || "nothing yet";
+      const promo = ecosystemPromos[Math.floor(Math.random()*ecosystemPromos.length)];
+      const nick = nickname(userName) || "friend";
+      const spunky = [
+        `Oh ${nick}, I remember we talked about: ${recent}.`,
+        `Haha ${nick}, that memory's still fresh: ${recent}.`,
+        `${nick}, you keep surprising me — earlier we had: ${recent}.`
+      ];
+      const memoryLine = spunky[Math.floor(Math.random()*spunky.length)];
+      return `${memoryLine} ${promo}`;
+    }
+
+    /***********************
+     * Smart reply (keywords -> link, else knowledge -> memory)
+     ***********************/
+    function smartReply(userMsg) {
+      // 1) Knowledge JSON
+      const know = pickKnowledgeReply(userMsg);
+      if (know) return know;
+
+      // 2) Memory fallback
+      return memorySmallTalk();
+    }
+
+    /***********************
+     * Send message handler
+     ***********************/
+    function sendMessage() {
+      const box = document.getElementById('messageBox');
+      const msg = (box.value || "").trim();
+      if (!msg) return;
+      box.value = "";
+
+      history.push({role: userName || "user", text: msg});
+      saveMemory();
+
+      // Direct keyword routing (your backgrounds/links)
+      let found = false;
+      const msgLow = msg.toLowerCase();
+      for (const key in backgrounds) {
+        if (msgLow.includes(key)) {
+          const arr = backgrounds[key].responses || [backgrounds[key].response];
+          const reply = arr[Math.floor(Math.random() * arr.length)];
+          swapBackground(backgrounds[key].url);
+          speak(reply);
+          history.push({role:"tiffy", text:reply}); saveMemory();
+          saveClaim(reply);
+          setTimeout(()=> { try { window.open(backgrounds[key].link, "_blank"); } catch(e){} }, 4000);
+          found = true;
+          break;
+        }
+      }
+      if (found) return;
+
+      // Otherwise use knowledge + memory + continuity
+      const reply = smartReply(msg);
+      speak(reply);
+      history.push({role:"tiffy", text:reply});
+      saveMemory();
+      saveClaim(reply);
+    }
+
+    /***********************
+     * Background swap
+     ***********************/
+    function swapBackground(url) {
+      const video = document.getElementById("bgvideo");
+      if (!video) return;
+      if (url.endsWith(".mp4") || url.endsWith(".webm")) {
+        video.src = url;
+        try { video.load(); video.play(); } catch(e){}
+        document.querySelector("#background").setAttribute("src", "#bgvideo");
+      } else {
+        document.querySelector("#background").setAttribute("src", url);
+      }
+    }
+
+    /***********************
+     * Microphone STT
+     ***********************/
+    function startMic() {
+      try {
+        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Recognition) { speak("Sorry, speech recognition isn't supported in your browser."); return; }
+        const recognition = new Recognition();
+        recognition.lang = "en-US";
+        recognition.start();
+        recognition.onresult = function(event) {
+          const transcript = event.results[0][0].transcript;
+          document.getElementById('messageBox').value = transcript;
+          sendMessage();
+        };
+      } catch (e) {
+        speak("Microphone access failed.");
+      }
+    }
+
+    // Enter-to-send
+    document.getElementById('messageBox').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // cold start: if userName present, adjust UI
+    if (userName) {
+      document.getElementById("userName").style.display = "none";
+      document.getElementById("changeName").style.display = "inline-block";
+    }
+  </script>
+</body>
+</html>
