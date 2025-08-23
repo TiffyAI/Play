@@ -148,5 +148,75 @@
       speak("Hey there! I'm TiffyAI — your cheeky crypto sidekick. Ready to dive into the Tiffyverse?");
     });
   </script>
+  <script>
+  // --- Ecosystem direct commands ---
+  const commandMap = {
+    "website": "https://www.tiffyai.co.za",
+    "whitepaper": "https://www.tiffyai.co.za/whitepaper.pdf",
+    "twitter": "https://twitter.com/TiffyAI",
+    "facebook": "https://facebook.com/TiffyAI",
+    "telegram": "https://t.me/TiffyAI_Bot",
+    "audit": "https://www.tiffyai.co.za/audit",
+    "sourcify": "https://sourcify.dev/#/lookup/0xTiffyAI"
+  };
+
+  function handleCommand(userInput) {
+    const words = userInput.toLowerCase().split(/\s+/);
+
+    // Match commands by keyword
+    for (const [cmd, url] of Object.entries(commandMap)) {
+      if (words.includes(cmd)) {
+        return `Got it — say “open ${cmd}” to jump straight there.`;
+      }
+    }
+
+    // Special cases: games
+    if (words.includes("game") || words.includes("play")) {
+      return "To launch a game, just say 'open games' — Snake, Tetris, Starship Tiffy are waiting!";
+    }
+
+    // Withdraws
+    if (words.includes("withdraw")) {
+      return "Easy! Just say 'open withdraw' and I’ll walk you through moving your TIFFY to your wallet.";
+    }
+
+    // Keys system
+    if (words.includes("key") || words.includes("keys")) {
+      return "Here’s the key system: Claim 1 $TIFFY + 1 Blue Key daily. 3 Keys = Luck Wheel, 5 Keys = Treasure, 10 Keys = 1 Gold Key. Collect 10 Gold Keys for AI-Trading access.";
+    }
+
+    // Lottery
+    if (words.includes("lottery") || words.includes("ticket")) {
+      return "Feeling lucky? You can buy lottery tickets and try your shot — say 'open lottery' when you’re ready.";
+    }
+
+    return null;
+  }
+
+  // --- Overriding sendMessage with command handling ---
+  const originalSendMessage = sendMessage;
+  sendMessage = function() {
+    const input = document.getElementById("user-input");
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+
+    addMessage(text, "user");
+    conversationHistory.push({ role: "user", text });
+
+    // First try command
+    let reply = handleCommand(text);
+
+    // Otherwise, knowledge engine
+    if (!reply) {
+      reply = findBestResponse(text);
+    }
+
+    addMessage(reply, "tiffy");
+    conversationHistory.push({ role: "tiffy", text: reply });
+    speak(reply);
+  };
+</script>
+
 </body>
 </html>
