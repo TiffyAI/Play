@@ -492,10 +492,7 @@
     let voiceReady = false;
     let userName = localStorage.getItem("tiffyUserName") || "";
     // conversation memory + last bot claim for continuity
-    let knowledgeBase = [];
-    let lastTopic = null;
-    let conversationHistory = [];
-    let ttsEnabled = true;
+    
     let history = JSON.parse(localStorage.getItem("tiffyMemory") || "[]");
     let lastBotClaim = localStorage.getItem("tiffyLastClaim") || ""; // e.g., "new game: Starship TiffyAI"
     function saveMemory() { localStorage.setItem("tiffyMemory", JSON.stringify(history)); }
