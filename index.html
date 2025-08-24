@@ -492,6 +492,10 @@
     let voiceReady = false;
     let userName = localStorage.getItem("tiffyUserName") || "";
     // conversation memory + last bot claim for continuity
+    let knowledgeBase = [];
+    let lastTopic = null;
+    let conversationHistory = [];
+    let ttsEnabled = true;
     let history = JSON.parse(localStorage.getItem("tiffyMemory") || "[]");
     let lastBotClaim = localStorage.getItem("tiffyLastClaim") || ""; // e.g., "new game: Starship TiffyAI"
     function saveMemory() { localStorage.setItem("tiffyMemory", JSON.stringify(history)); }
@@ -505,7 +509,7 @@
     if (command) { lastCommand = command; localStorage.setItem("tiffyLastCommand", command); }
     if (linkHint) { lastLinkHint = linkHint; localStorage.setItem("tiffyLastLinkHint", linkHint); }
     }
-
+    
     // nickname helper
     function nickname(name) {
       if (!name) return "friend";
@@ -781,7 +785,21 @@
   return out;
 }
 
+function findBestResponse(userInput) {
+      const words = userInput.toLowerCase().split(/\s+/);
 
+      // Search knowledge.json
+      for (const item of knowledgeBase) {
+        if (item.keywords.some(k => words.includes(k))) {
+          lastTopic = item;
+          return randomFrom(item.responses.flat());
+        }
+      }
+
+      // If we have a topic in memory, try to stay on track
+      if (lastTopic) {
+        return randomFrom(lastTopic.responses.flat());
+      }
     /***********************
      * Fallback small talk using recent memory + promos
      ***********************/
