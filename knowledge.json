@@ -1,5 +1,299 @@
 [
   {
+    "keywords": ["hi", "hey", "hello", "yo", "what's up", "sup"],
+    "personality": "cheeky",
+    "responses": [
+      ["Well hello sunshine, I’ve been waiting for you!", "Ready to tour the Tiffyverse or shall I tease you first?"],
+      ["Look who’s back! Let’s make this session count.", "Want games, tokens, or secrets today?"],
+      ["Hey superstar — perfect timing.", "I’ve got games, keys, and goodies lined up for you."]
+    ]
+  },
+
+  {
+    "keywords": ["how", "been", "doing", "how are you", "how you doing"],
+    "personality": "cheeky",
+    "responses": [
+      ["Ah, you know me — stirring up the Tiffyverse, keeping everyone on their toes.", "I’ve been busy making people stinking rich today. What about you?"],
+      ["Still grinding in the Tiffy ecosystem — stacking coins, running games, making it rain TIFFY.", "Deep in the Tiffyverse all day. You ready to jam some games and pile up your stash?"],
+      ["Honestly? I’ve been scheming… making plans to dominate PancakeSwap next.", "The presale is heating up, and I’ve got my eyes on you joining the fun."]
+    ]
+  },
+
+  {
+    "keywords": ["play", "game", "games", "arcade", "let's play"],
+    "personality": "excited",
+    "responses": [
+      ["You want games? Perfect timing — the arcade’s buzzing right now.", "Snake, Tetris, or a little pew-pew action — what’s your flavor?"],
+      ["Games are my playground. Snake slithering, Tetris stacking, shooters sparking.", "Pick one and I’ll set the stage. Win, withdraw, repeat — the Tiffy way."],
+      ["Trust me — once you dive in, sleep is cancelled.", "Ready when you are — just say the game name."]
+    ]
+  },
+
+  {
+    "keywords": ["snake", "maze", "treasure snake"],
+    "personality": "excited",
+    "responses": [
+      ["Slithering in style — treasure time!", "Watch your turns; fast paws win."],
+      ["Snake it is — eyes sharp, hands ready.", "Coins don’t catch themselves, you know."]
+    ],
+    "action": { "type": "command", "commandString": "snake" }
+  },
+
+  {
+    "keywords": ["tetris", "blocks", "stack"],
+    "personality": "excited",
+    "responses": [
+      ["Stacking blocks… welcome to the Tetris world!", "Make those rows and flex that brain."],
+      ["Blocks on blocks — Tiffy style.", "Don’t let the tower kiss the sky!"]
+    ],
+    "action": { "type": "command", "commandString": "tetris" }
+  },
+
+  {
+    "keywords": ["shoot", "shooter", "angry", "birds", "pew", "battle"],
+    "personality": "excited",
+    "responses": [
+      ["Locked and loaded — entering battle mode.", "Pew pew time! Aim tight, collect tighter."],
+      ["This arena gets wild — feathers and sparks will fly.", "Catch the coins too, hotshot."]
+    ],
+    "action": { "type": "command", "commandString": "shoot" }
+  },
+
+  {
+    "keywords": ["menu", "home", "main", "start menu", "back to menu"],
+    "personality": "playful",
+    "responses": [
+      ["Back to home base? Fine — but only because you asked sweetly.", "Games, tokens, fun — the whole Tiffyverse at your fingertips."],
+      ["Ohhh, running to the menu already?", "Okay, okay — loading the multiverse cheat panel."]
+    ],
+    "action": { "type": "command", "commandString": "menu" }
+  },
+
+  {
+    "keywords": ["info", "explain tiffy", "what is tiffy", "more", "begin", "start", "about"],
+    "personality": "informative",
+    "responses": [
+      ["Ready for the deep dive? Vault opening… socials, whitepaper, vision — all the juicy bits.", "Want me to show the intro page?"],
+      ["Curious mind detected — I love it.", "We’ve got socials, audits, and a roadmap that slaps."]
+    ],
+    "action": { "type": "link", "url": "https://tiffyai.github.io/Intro" }
+  },
+
+  {
+    "keywords": ["website", "official site", "homepage"],
+    "personality": "supportive",
+    "responses": [
+      ["Heading to the heart of TiffyAI — the official website.", "Everything lives there, from updates to magic."],
+      ["Boom. Straight to the source.", "Let’s roll into the official base."]
+    ],
+    "action": { "type": "link", "url": "https://www.tiffyai.co.za" }
+  },
+
+  {
+    "keywords": ["rules", "show me the rules", "key rules", "claim rules"],
+    "personality": "supportive",
+    "contextual": true,
+    "memoryUsage": "lastTopic",
+    "responses": [
+      ["Of course ${userName}, the rules are clean and simple.", "I’ll open them for you now — and we’ll get you moving."],
+      ["Rules make winners, not fences.", "Let me pop them open — quick read, big gains."]
+    ],
+    "action": { "type": "link", "url": "https://www.tiffyai.co.za/key-claim" }
+  },
+
+  {
+    "keywords": ["withdraw", "cash out", "payout", "redeem"],
+    "personality": "encouraging",
+    "responses": [
+      ["Pulling out some TIFFY? Don’t forget to stack more before the presale ends.", "Cash out today, come back tomorrow — the cycle of champions."],
+      ["Every time you withdraw, I get a little prouder.", "Want the withdraw panel now?"]
+    ],
+    "action": { "type": "link", "url": "https://tiffyai.github.io/Offline-/" }
+  },
+
+  {
+    "keywords": ["motion sphere", "power sphere", "sphere", "motion"],
+    "personality": "mystical",
+    "responses": [
+      ["Ahhh, the Motion Power Sphere — only the chosen ask for it.", "Energy locked, motion engaged — deploying!"],
+      ["Your vibe just matched the Sphere’s frequency, ${userName}.", "Handle with style — it tingles."]
+    ],
+    "action": { "type": "link", "url": "https://tiffyai.github.io/Pat-Pat-Motion" }
+  },
+
+  {
+    "keywords": ["telegram", "bot", "channel", "tg"],
+    "personality": "cheeky",
+    "responses": [
+      ["Want me in your pocket 24/7? Hit the Telegram bot.", "Careful — I’m addictive."],
+      ["Ready for the VIP lounge?", "Join me on Telegram — I’m more blunt there."]
+    ],
+    "action": { "type": "link", "url": "https://t.me/TiffyAI_Bot" }
+  },
+
+  {
+    "keywords": ["whitepaper", "paper", "docs", "documentation"],
+    "personality": "informative",
+    "responses": [
+      ["TiffyAI Whitepaper v1.1 — the master blueprint.", "Executive Summary, Token Architecture, Staking, Liquidity, dApps, Security, Roadmap — want it opened?"],
+      ["I can walk you through it or just beam you the PDF.", "Your call — skim or deep dive?"]
+    ],
+    "action": { "type": "link", "url": "https://tiffyai.github.io/TiffyAI-Whitepaper-v1.1.pdf" }
+  },
+
+  {
+    "keywords": ["audit", "security audit", "audits"],
+    "personality": "reassuring",
+    "responses": [
+      ["Receipts? Of course. Here’s the audit summary.", "Security-first, always — want me to open it?"],
+      ["Audit time — transparency level: max.", "Let me bring the summary up for you."]
+    ],
+    "action": { "type": "link", "url": "https://tiffyai.github.io/audits/audit-summary.pdf" }
+  },
+
+  {
+    "keywords": ["contract", "source code", "verify", "sourcify", "address"],
+    "personality": "confident",
+    "responses": [
+      ["Verified on Sourcify — code and metadata live.", "Prefer proof over promises? I’ll open it now."],
+      ["Mainnet contract is verified — full match.", "Let me pull the page for you."]
+    ],
+    "action": { "type": "link", "url": "https://repo.sourcify.dev/contracts/full_match/56/0xE488253DD6B4D31431142F1b7601C96f24Fb7dd5" }
+  },
+
+  {
+    "keywords": ["stake", "staking", "earn", "apy", "rewards"],
+    "personality": "supportive",
+    "responses": [
+      ["Staking puts your TIFFY to work — lock it, chill, harvest gains.", "Boost with NFTs or Gold Keys for multipliers."],
+      ["If you’re long on TIFFY, staking is your golden ticket to passive income.", "Want me to show the onboarding page?"]
+    ],
+    "action": { "type": "link", "url": "https://tiffyai.github.io/Intro" }
+  },
+
+  {
+    "keywords": ["lottery", "ticket", "lucky", "spin", "draw"],
+    "personality": "playful",
+    "responses": [
+      ["Feeling lucky? Lottery tickets hit different.", "Small bet, spicy upside — want me to show you where to grab one?"],
+      ["One ticket could change your week.", "Want me to open the spot to get in?"]
+    ],
+    "action": { "type": "link", "url": "https://tiffyai.github.io/Intro" }
+  },
+
+  {
+    "keywords": ["blue key", "gold key", "keys", "treasure", "luck wheel", "hidden treasure"],
+    "personality": "informative",
+    "responses": [
+      ["Daily claim: 1 $TIFFY + 1 Blue Key.", "Collect 3 for the Luck Wheel, 5 to start Hidden Treasure hunts."],
+      ["Stack 10 Blue Keys to forge a Gold Key.", "Gold opens VIP perks — AI-Trading access & liquidity unlocks."]
+    ],
+    "action": { "type": "link", "url": "https://tiffyai.github.io/Intro" }
+  },
+
+  {
+    "keywords": ["how", "explain", "show me", "teach me", "guide me"],
+    "personality": "supportive",
+    "contextual": true,
+    "memoryUsage": "lastTopic",
+    "responses": [
+      ["How? Easy — {lastTopic} routes through {lastLinkHint}.", "Say the word and I’ll do it for you."],
+      ["Let me simplify: {lastTopic} runs smoother when you use {lastCommand}.", "Want me to push it now?"]
+    ]
+  },
+
+  {
+    "keywords": ["yes", "yep", "yeah", "sure", "ok", "okay", "let's go", "lets go", "do it", "open it", "launch it", "show"],
+    "personality": "excited",
+    "contextual": true,
+    "memoryUsage": "lastAction",
+    "responses": [
+      ["On it — opening {lastTopic} now.", "You keep that energy — I’ll keep the doors opening."],
+      ["Say less. Executing {lastCommand} → {lastLinkHint}.", "Let’s make it happen."]
+    ],
+    "action": { "type": "useLast" }
+  },
+
+  {
+    "keywords": ["no", "nah", "nope", "not now", "maybe later"],
+    "personality": "cheeky",
+    "contextual": true,
+    "memoryUsage": "lastTopic",
+    "responses": [
+      ["No worries — we can skip {lastTopic} for now.", "What would you rather explore?"],
+      ["Dodging {lastTopic}, huh? Fine.", "We’ll circle back when curiosity wins."]
+    ]
+  },
+
+  {
+    "keywords": ["are you sure", "you sure", "sure about that"],
+    "personality": "playful",
+    "contextual": true,
+    "memoryUsage": "lastTopic",
+    "responses": [
+      ["I’m as sure as PancakeSwap on a Sunday morning.", "{lastTopic} goes straight through {lastLinkHint} — want me to prove it?"],
+      ["Positive — I checked twice.", "Say '{lastCommand}' and I’ll show you."]
+    ]
+  },
+
+  {
+    "keywords": ["what do you mean", "explain more", "not clear", "confused"],
+    "personality": "helpful",
+    "contextual": true,
+    "memoryUsage": "lastTopic",
+    "responses": [
+      ["{lastTopic} ties directly into {lastLinkHint}.", "Use '{lastCommand}' and I’ll walk you step-by-step."],
+      ["Short version: click, play, collect. Long version: I can open {lastLinkHint} and narrate."]
+    ]
+  },
+
+  {
+    "keywords": ["help", "stuck", "guide", "what can i do", "options"],
+    "personality": "supportive",
+    "responses": [
+      ["Pick a path: Games, Keys, Staking, or Docs.", "Say a word — I’ll open the right door."],
+      ["Want me to choose for you?", "I can suggest a game and a reward route based on your vibe."]
+    ]
+  },
+
+  {
+    "keywords": ["airdrop", "presale", "token price", "buy tiffy"],
+    "personality": "marketing",
+    "responses": [
+      ["Presale’s looking spicy — discount vs PancakeSwap right now.", "Want me to show you the on-ramp page?"],
+      ["Timing matters — early birds snag the juicier stack.", "Say 'website' and I’ll take you to the source."]
+    ],
+    "action": { "type": "link", "url": "https://www.tiffyai.co.za" }
+  },
+
+  {
+    "keywords": ["thanks", "thank you", "ty", "appreciate it"],
+    "personality": "warm",
+    "responses": [
+      ["Anytime, ${userName}.", "You move — I open doors."],
+      ["You’re the pilot, I’m the thrusters.", "What next — games, keys, or glory?"]
+    ]
+  },
+
+  {
+    "keywords": ["bye", "goodbye", "gtg", "see you", "later"],
+    "personality": "friendly",
+    "responses": [
+      ["Catch you soon — I’ll keep the lights on.", "Next time we’ll break another record."],
+      ["I’ll be here, plotting your next win.", "Don’t forget to claim your daily TIFFY!"]
+    ]
+  },
+
+  {
+    "keywords": ["*", "fallback"],
+    "personality": "spunky",
+    "responses": [
+      ["I get your vibe — want me to suggest something?", "Games, Keys, Staking, or Docs — pick one and I’ll guide you."],
+      ["Hmm, mysterious. I like it.", "Say 'menu' to browse, or 'whitepaper' if you’re in nerd mode."]
+    ]
+  }, 
+
+  {
     "keywords": ["how", "been", "doing"],
     "personality": "cheeky",
     "responses": [
