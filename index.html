@@ -800,8 +800,8 @@
 
     /***********************
     /***********************
- * Knowledge Engine (auto-refresh + cache + silent fallback)
- ***********************/
+    * Knowledge Engine (auto-refresh + cache + silent fallback)
+     ***********************/
 function pickKnowledgeReply(userMsg) {
   if (!Array.isArray(knowledge) || knowledge.length === 0) return null;
   const lastUserTurn = [...history].reverse().find(h=>h.role !== "tiffy")?.text || "";
@@ -916,20 +916,6 @@ function sendMessage() {
   history.push({role:"tiffy", text:reply});
   saveMemory();
   saveClaim(reply);
-}
-    // refresh on each session (silent). If it fails, keep cache.
-      fetchWithTimeout(KNOWLEDGE_URL, { cache: "no-cache" }, 4500)
-        .then(r => r.ok ? r.json() : Promise.reject())
-        .then(data => {
-          if (Array.isArray(data)) {
-            knowledge = data;
-            localStorage.setItem(KNOW_CACHE_KEY, JSON.stringify(data));
-            localStorage.setItem(KNOW_CACHE_AT, String(now));
-          }
-        })
-        .catch(()=>{ /* silent */ });
-
-      // If no cache and fetch failed, keep empty -> engine will gracefully fallback.
     }
 
     function fetchWithTimeout(url, opts={}, timeout=5000) {
