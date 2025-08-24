@@ -799,23 +799,125 @@
     });
 
     /***********************
-     * Knowledge Engine (auto-refresh + cache + silent fallback)
-     ***********************/
-    const KNOWLEDGE_URL = "https://tiffyai.github.io/Play/knowledge.json";
-    const KNOW_CACHE_KEY = "tiffyKnowledgeCache";
-    const KNOW_CACHE_AT = "tiffyKnowledgeCacheAt";
-    const KNOW_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
+    /***********************
+ * Knowledge Engine (auto-refresh + cache + silent fallback)
+ ***********************/
+function pickKnowledgeReply(userMsg) {
+  if (!Array.isArray(knowledge) || knowledge.length === 0) return null;
+  const lastUserTurn = [...history].reverse().find(h=>h.role !== "tiffy")?.text || "";
+  let best = null, bestScore = -1;
 
-    let knowledge = []; // array of {keywords, personality, responses:[[line1,line2], ...]}
+  for (const item of knowledge) {
+    const sc = scoreKnowledgeItem(item, userMsg, lastUserTurn, lastBotClaim);
+    if (sc > bestScore) { bestScore = sc; best = item; }
+  }
+  if (!best || !Array.isArray(best.responses) || best.responses.length===0) return null;
 
-    function initKnowledge() {
-      const now = Date.now();
-      const cached = localStorage.getItem(KNOW_CACHE_KEY);
-      const cachedAt = parseInt(localStorage.getItem(KNOW_CACHE_AT) || "0", 10);
-      if (cached) {
-        try { knowledge = JSON.parse(cached) || []; } catch { knowledge = []; }
-      }
-      // refresh on each session (silent). If it fails, keep cache.
+  const pair = best.responses[Math.floor(Math.random()*best.responses.length)];
+  const nick = nickname(userName);
+  const line1 = (pair[0]||"").replace("${userName}", nick);
+  const line2 = (pair[1]||"").replace("${userName}", nick);
+  const joiners = [
+    `${line1} ${line2}`,
+    `${line1} — ${line2}`,
+    `${line1}. ${line2}`
+  ];
+  let out = joiners[Math.floor(Math.random()*joiners.length)];
+
+  // Execute JSON action if defined
+  if (best.action) {
+    const act = best.action;
+    if (act.type === "push" && act.target) {
+      setTimeout(()=> tiffyPushCommand(act.target), 2000);
+      saveAction(act);
+    } else if (act.type === "link" && act.url) {
+      setTimeout(()=> { try { window.open(act.url, "_blank"); } catch(e){} }, 2000);
+      saveAction(act);
+    } else if (act.type === "background" && act.url) {
+      setTimeout(()=> swapBackground(act.url), 2000);
+      saveAction(act);
+    }
+  }
+  // If no action, but memory says “last topic” → replay lastBotAction
+  else if (best.memoryUsage === "lastTopic" && lastBotAction) {
+    if (lastBotAction.type === "push" && lastBotAction.target) {
+      setTimeout(()=> tiffyPushCommand(lastBotAction.target), 2000);
+    } else if (lastBotAction.type === "link" && lastBotAction.url) {
+      setTimeout(()=> { try { window.open(lastBotAction.url, "_blank"); } catch(e){} }, 2000);
+    } else if (lastBotAction.type === "background" && lastBotAction.url) {
+      setTimeout(()=> swapBackground(lastBotAction.url), 2000);
+    }
+  }
+
+  if (/new game|try this|i can|let me|i’ll|i will|let's/i.test(out)) {
+    saveClaim(out.substring(0, 160));
+  }
+  return out;
+}
+
+/***********************
+ * Fallback small talk using recent memory + promos
+ ***********************/
+function memorySmallTalk() {
+  const nick = nickname(userName);
+  if (lastBotClaim) return `Still thinking about "${lastBotClaim}", ${nick}? 👀`;
+  if (history.length > 2) {
+    const prev = history[history.length-2]?.text || "";
+    return `Oh, about "${prev}" earlier — wanna keep going on that, ${nick}?`;
+  }
+  const promos = [
+    `Don't forget — claim your Blue Key daily at the Key Claim portal, ${nick}.`,
+    `You can always try your luck on the Lottery Tickets, ${nick}.`,
+    `Keep stacking Blue Keys… remember, 10 becomes a Gold Key.`
+  ];
+  return promos[Math.floor(Math.random()*promos.length)];
+}
+
+/***********************
+ * Smart reply (keywords -> link, else knowledge -> memory)
+ ***********************/
+function smartReply(userMsg) {
+  const know = pickKnowledgeReply(userMsg);
+  if (know) return know;
+  return memorySmallTalk();
+}
+
+/***********************
+ * Send message handler
+ ***********************/
+function sendMessage() {
+  const box = document.getElementById('messageBox');
+  const msg = (box.value || "").trim();
+  if (!msg) return;
+  box.value = "";
+
+  history.push({role: userName || "user", text: msg});
+  saveMemory();
+
+  let found = false;
+  const msgLow = msg.toLowerCase();
+  for (const key in backgrounds) {
+    if (msgLow.includes(key)) {
+      const arr = backgrounds[key].responses || [backgrounds[key].response];
+      const reply = arr[Math.floor(Math.random() * arr.length)];
+      swapBackground(backgrounds[key].url);
+      speak(reply);
+      history.push({role:"tiffy", text:reply}); saveMemory();
+      saveClaim(reply);
+      setTimeout(()=> { try { window.open(backgrounds[key].link, "_blank"); } catch(e){} }, 4000);
+      found = true;
+      break;
+    }
+  }
+  if (found) return;
+
+  const reply = smartReply(msg);
+  speak(reply);
+  history.push({role:"tiffy", text:reply});
+  saveMemory();
+  saveClaim(reply);
+}
+    // refresh on each session (silent). If it fails, keep cache.
       fetchWithTimeout(KNOWLEDGE_URL, { cache: "no-cache" }, 4500)
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(data => {
