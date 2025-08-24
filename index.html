@@ -432,6 +432,15 @@
     let lastBotClaim = localStorage.getItem("tiffyLastClaim") || ""; // e.g., "new game: Starship TiffyAI"
     function saveMemory() { localStorage.setItem("tiffyMemory", JSON.stringify(history)); }
     function saveClaim(txt){ lastBotClaim = txt || ""; localStorage.setItem("tiffyLastClaim", lastBotClaim); }
+    let lastTopic = localStorage.getItem("tiffyLastTopic") || "";
+    let lastCommand = localStorage.getItem("tiffyLastCommand") || "";
+    let lastLinkHint = localStorage.getItem("tiffyLastLinkHint") || "";
+
+    function saveContext(topic, command, linkHint) {
+    if (topic) { lastTopic = topic; localStorage.setItem("tiffyLastTopic", topic); }
+    if (command) { lastCommand = command; localStorage.setItem("tiffyLastCommand", command); }
+    if (linkHint) { lastLinkHint = linkHint; localStorage.setItem("tiffyLastLinkHint", linkHint); }
+    }
 
     // nickname helper
     function nickname(name) {
@@ -664,36 +673,50 @@
 
     // Pick a response pair from knowledge
     function pickKnowledgeReply(userMsg) {
-      if (!Array.isArray(knowledge) || knowledge.length === 0) return null;
-      const lastUserTurn = [...history].reverse().find(h=>h.role !== "tiffy")?.text || "";
-      let best = null, bestScore = -1;
+  if (!Array.isArray(knowledge) || knowledge.length === 0) return null;
 
-      for (const item of knowledge) {
-        const sc = scoreKnowledgeItem(item, userMsg, lastUserTurn, lastBotClaim);
-        if (sc > bestScore) { bestScore = sc; best = item; }
-      }
-      if (!best || !Array.isArray(best.responses) || best.responses.length===0) return null;
+  const lastUserTurn = [...history].reverse().find(h => h.role !== "tiffy")?.text || "";
+  let best = null, bestScore = -1;
 
-      // choose a pair, then stitch into one line with a little variability
-      const pair = best.responses[Math.floor(Math.random()*best.responses.length)];
-      const nick = nickname(userName);
-      const line1 = (pair[0]||"").replace("${userName}", nick);
-      const line2 = (pair[1]||"").replace("${userName}", nick);
+  for (const item of knowledge) {
+    let sc = scoreKnowledgeItem(item, userMsg, lastUserTurn, lastBotClaim);
 
-      // Lightweight persona garnish
-      const joiners = [
-        `${line1} ${line2}`,
-        `${line1} — ${line2}`,
-        `${line1}. ${line2}`
-      ];
-      let out = joiners[Math.floor(Math.random()*joiners.length)];
+    // 🔥 Bonus if this is a contextual reply & we have memory
+    if (item.contextual && lastTopic) sc += 5;
 
-      // Update claim if the line "promises" something (basic heuristic)
-      if (/new game|try this|i can|let me|i’ll|i will|let's/i.test(out)) {
-        saveClaim(out.substring(0, 160)); // keep it short
-      }
-      return out;
+    if (sc > bestScore) { bestScore = sc; best = item; }
+  }
+  if (!best || !Array.isArray(best.responses) || best.responses.length === 0) return null;
+
+  // 🎲 choose a response pair
+  const pair = best.responses[Math.floor(Math.random() * best.responses.length)];
+  const line1 = (pair[0] || "");
+  const line2 = (pair[1] || "");
+  
+  // 🧠 Memory injection
+  let out = `${line1} ${line2}`;
+  out = out
+    .replace("${userName}", nickname(userName))
+    .replace("{lastTopic}", lastTopic || "that")
+    .replace("{lastCommand}", lastCommand || "the command")
+    .replace("{lastLinkHint}", lastLinkHint || "the link");
+
+  // 📝 Save claim if promising
+  if (/new game|try this|i can|let me|i’ll|i will|let's/i.test(out)) {
+    saveClaim(out.substring(0, 160));
+  }
+
+  // 🧩 Update memory context (very basic for now)
+  if (!best.contextual) {
+    // Example heuristic: first keyword becomes the "topic"
+    if (Array.isArray(best.keywords) && best.keywords.length > 0) {
+      saveContext(best.keywords[0], "play " + best.keywords[0], best.keywords[0]);
     }
+  }
+
+  return out;
+}
+
 
     /***********************
      * Fallback small talk using recent memory + promos
