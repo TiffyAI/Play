@@ -641,28 +641,28 @@
        link: "https://www.tiffyai.co.za"
       }
       };
-      let selectedVoice = null;
-      let voiceReady = false;
-      let userName = localStorage.getItem("tiffyUserName") || "";
-// conversation memory + last bot claim for continuity
-      let history = JSON.parse(localStorage.getItem("tiffyMemory") || "[]");
-      let lastBotClaim = localStorage.getItem("tiffyLastClaim") || ""; 
-      let lastBotAction = JSON.parse(localStorage.getItem("tiffyLastAction") || "null");
+          /***********************
+     * State & Memory
+     ***********************/
+    let selectedVoice = null;
+    let voiceReady = false;
+    let userName = localStorage.getItem("tiffyUserName") || "";
+    let history = JSON.parse(localStorage.getItem("tiffyMemory") || "[]");
+    let lastBotClaim = localStorage.getItem("tiffyLastClaim") || "";
 
-      function saveMemory() { localStorage.setItem("tiffyMemory", JSON.stringify(history)); }
-      function saveClaim(txt){ lastBotClaim = txt || ""; localStorage.setItem("tiffyLastClaim", lastBotClaim); }
-      function saveAction(act) { lastBotAction = act; localStorage.setItem("tiffyLastAction", JSON.stringify(act)); }
+    function saveMemory() { localStorage.setItem("tiffyMemory", JSON.stringify(history)); }
+    function saveClaim(txt){ lastBotClaim = txt || ""; localStorage.setItem("tiffyLastClaim", lastBotClaim); }
 
-// nickname helper
-      function nickname(name) {
+    function nickname(name) {
       if (!name) return "friend";
       if (Math.random() < 0.33) return name + "ey";
       return name;
-      }
+    }
+
     /***********************
      * Voice setup (silent)
      ***********************/
-      function populateVoices() {
+    function populateVoices() {
       const select = document.getElementById("voiceSelect");
       const voices = speechSynthesis.getVoices() || [];
       select.innerHTML = "";
@@ -701,7 +701,7 @@
         const g = greetings[Math.floor(Math.random()*greetings.length)];
         document.getElementById("greetingText").innerText = g.replace("{name}", nickname(userName));
       }
-      initKnowledge(); // auto-refresh knowledge each session
+      initKnowledge();
     });
     if (speechSynthesis.onvoiceschanged !== undefined) {
       speechSynthesis.onvoiceschanged = populateVoices;
@@ -799,123 +799,30 @@
     });
 
     /***********************
-    /***********************
-    * Knowledge Engine (auto-refresh + cache + silent fallback)
+     * Knowledge Engine (auto-refresh + cache + silent fallback)
      ***********************/
-function pickKnowledgeReply(userMsg) {
-  if (!Array.isArray(knowledge) || knowledge.length === 0) return null;
-  const lastUserTurn = [...history].reverse().find(h=>h.role !== "tiffy")?.text || "";
-  let best = null, bestScore = -1;
+    const KNOWLEDGE_URL = "https://tiffyai.github.io/Play/knowledge.json";
+    const KNOW_CACHE_KEY = "tiffyKnowledgeCache";
+    const KNOW_CACHE_AT = "tiffyKnowledgeCacheAt";
 
-  for (const item of knowledge) {
-    const sc = scoreKnowledgeItem(item, userMsg, lastUserTurn, lastBotClaim);
-    if (sc > bestScore) { bestScore = sc; best = item; }
-  }
-  if (!best || !Array.isArray(best.responses) || best.responses.length===0) return null;
+    let knowledge = [];
 
-  const pair = best.responses[Math.floor(Math.random()*best.responses.length)];
-  const nick = nickname(userName);
-  const line1 = (pair[0]||"").replace("${userName}", nick);
-  const line2 = (pair[1]||"").replace("${userName}", nick);
-  const joiners = [
-    `${line1} ${line2}`,
-    `${line1} — ${line2}`,
-    `${line1}. ${line2}`
-  ];
-  let out = joiners[Math.floor(Math.random()*joiners.length)];
-
-  // Execute JSON action if defined
-  if (best.action) {
-    const act = best.action;
-    if (act.type === "push" && act.target) {
-      setTimeout(()=> tiffyPushCommand(act.target), 2000);
-      saveAction(act);
-    } else if (act.type === "link" && act.url) {
-      setTimeout(()=> { try { window.open(act.url, "_blank"); } catch(e){} }, 2000);
-      saveAction(act);
-    } else if (act.type === "background" && act.url) {
-      setTimeout(()=> swapBackground(act.url), 2000);
-      saveAction(act);
-    }
-  }
-  // If no action, but memory says “last topic” → replay lastBotAction
-  else if (best.memoryUsage === "lastTopic" && lastBotAction) {
-    if (lastBotAction.type === "push" && lastBotAction.target) {
-      setTimeout(()=> tiffyPushCommand(lastBotAction.target), 2000);
-    } else if (lastBotAction.type === "link" && lastBotAction.url) {
-      setTimeout(()=> { try { window.open(lastBotAction.url, "_blank"); } catch(e){} }, 2000);
-    } else if (lastBotAction.type === "background" && lastBotAction.url) {
-      setTimeout(()=> swapBackground(lastBotAction.url), 2000);
-    }
-  }
-
-  if (/new game|try this|i can|let me|i’ll|i will|let's/i.test(out)) {
-    saveClaim(out.substring(0, 160));
-  }
-  return out;
-}
-
-/***********************
- * Fallback small talk using recent memory + promos
- ***********************/
-function memorySmallTalk() {
-  const nick = nickname(userName);
-  if (lastBotClaim) return `Still thinking about "${lastBotClaim}", ${nick}? 👀`;
-  if (history.length > 2) {
-    const prev = history[history.length-2]?.text || "";
-    return `Oh, about "${prev}" earlier — wanna keep going on that, ${nick}?`;
-  }
-  const promos = [
-    `Don't forget — claim your Blue Key daily at the Key Claim portal, ${nick}.`,
-    `You can always try your luck on the Lottery Tickets, ${nick}.`,
-    `Keep stacking Blue Keys… remember, 10 becomes a Gold Key.`
-  ];
-  return promos[Math.floor(Math.random()*promos.length)];
-}
-
-/***********************
- * Smart reply (keywords -> link, else knowledge -> memory)
- ***********************/
-function smartReply(userMsg) {
-  const know = pickKnowledgeReply(userMsg);
-  if (know) return know;
-  return memorySmallTalk();
-}
-
-/***********************
- * Send message handler
- ***********************/
-function sendMessage() {
-  const box = document.getElementById('messageBox');
-  const msg = (box.value || "").trim();
-  if (!msg) return;
-  box.value = "";
-
-  history.push({role: userName || "user", text: msg});
-  saveMemory();
-
-  let found = false;
-  const msgLow = msg.toLowerCase();
-  for (const key in backgrounds) {
-    if (msgLow.includes(key)) {
-      const arr = backgrounds[key].responses || [backgrounds[key].response];
-      const reply = arr[Math.floor(Math.random() * arr.length)];
-      swapBackground(backgrounds[key].url);
-      speak(reply);
-      history.push({role:"tiffy", text:reply}); saveMemory();
-      saveClaim(reply);
-      setTimeout(()=> { try { window.open(backgrounds[key].link, "_blank"); } catch(e){} }, 4000);
-      found = true;
-      break;
-    }
-  }
-  if (found) return;
-
-  const reply = smartReply(msg);
-  speak(reply);
-  history.push({role:"tiffy", text:reply});
-  saveMemory();
-  saveClaim(reply);
+    function initKnowledge() {
+      const now = Date.now();
+      const cached = localStorage.getItem(KNOW_CACHE_KEY);
+      if (cached) {
+        try { knowledge = JSON.parse(cached) || []; } catch { knowledge = []; }
+      }
+      fetchWithTimeout(KNOWLEDGE_URL, { cache: "no-cache" }, 4500)
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(data => {
+          if (Array.isArray(data)) {
+            knowledge = data;
+            localStorage.setItem(KNOW_CACHE_KEY, JSON.stringify(data));
+            localStorage.setItem(KNOW_CACHE_AT, String(now));
+          }
+        })
+        .catch(()=>{});
     }
 
     function fetchWithTimeout(url, opts={}, timeout=5000) {
@@ -925,23 +832,19 @@ function sendMessage() {
         .finally(() => clearTimeout(id));
     }
 
-    // Simple normalization
     function norm(s){ return (s||"").toLowerCase().replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim(); }
 
-    // Extract last N words from a string
     function lastNWords(s, n=3){
       const arr = norm(s).split(" ").filter(Boolean);
       return arr.slice(-n);
     }
 
-    // Score a knowledge item by keyword hits & trigram continuity
     function scoreKnowledgeItem(item, msg, lastUser, lastClaim){
       let score = 0;
       const msgTokens = new Set(norm(msg).split(" ").filter(Boolean));
       const lastTokens = new Set(lastNWords(lastUser,3));
       const claimTokens = new Set(lastNWords(lastClaim,4));
 
-      // keyword hits
       if (Array.isArray(item.keywords)) {
         for (const k of item.keywords) {
           const kk = norm(k);
@@ -949,7 +852,6 @@ function sendMessage() {
         }
       }
 
-      // trigram continuity: if last 3 of user appear together in any response variant, boost
       const last3 = lastNWords(lastUser,3).join(" ");
       if (last3) {
         for (const pair of (item.responses || [])) {
@@ -958,7 +860,6 @@ function sendMessage() {
         }
       }
 
-      // claim continuity: if item mentions words from last claim, boost
       const lc = norm(lastClaim);
       if (lc) {
         for (const pair of (item.responses || [])) {
@@ -969,7 +870,16 @@ function sendMessage() {
       return score;
     }
 
-    // Pick a response pair from knowledge
+    function tiffyPushCommand(action) {
+      if (!action || !action.type) return;
+      if (action.type === "link" && action.url) {
+        setTimeout(()=>{ try{ window.open(action.url, "_blank"); }catch(e){} }, 1500);
+      }
+      if (action.type === "background" && action.url) {
+        swapBackground(action.url);
+      }
+    }
+
     function pickKnowledgeReply(userMsg) {
       if (!Array.isArray(knowledge) || knowledge.length === 0) return null;
       const lastUserTurn = [...history].reverse().find(h=>h.role !== "tiffy")?.text || "";
@@ -981,13 +891,11 @@ function sendMessage() {
       }
       if (!best || !Array.isArray(best.responses) || best.responses.length===0) return null;
 
-      // choose a pair, then stitch into one line with a little variability
       const pair = best.responses[Math.floor(Math.random()*best.responses.length)];
       const nick = nickname(userName);
       const line1 = (pair[0]||"").replace("${userName}", nick);
       const line2 = (pair[1]||"").replace("${userName}", nick);
 
-      // Lightweight persona garnish
       const joiners = [
         `${line1} ${line2}`,
         `${line1} — ${line2}`,
@@ -995,15 +903,16 @@ function sendMessage() {
       ];
       let out = joiners[Math.floor(Math.random()*joiners.length)];
 
-      // Update claim if the line "promises" something (basic heuristic)
+      if (best.action) { tiffyPushCommand(best.action); }
+
       if (/new game|try this|i can|let me|i’ll|i will|let's/i.test(out)) {
-        saveClaim(out.substring(0, 160)); // keep it short
+        saveClaim(out.substring(0, 160));
       }
       return out;
     }
 
     /***********************
-     * Fallback small talk using recent memory + promos
+     * Fallback small talk
      ***********************/
     function memorySmallTalk() {
       const recent = history.slice(-3).map(h => `${h.role}: ${h.text}`).join(" | ") || "nothing yet";
@@ -1019,14 +928,11 @@ function sendMessage() {
     }
 
     /***********************
-     * Smart reply (keywords -> link, else knowledge -> memory)
+     * Smart reply
      ***********************/
     function smartReply(userMsg) {
-      // 1) Knowledge JSON
       const know = pickKnowledgeReply(userMsg);
       if (know) return know;
-
-      // 2) Memory fallback
       return memorySmallTalk();
     }
 
@@ -1042,7 +948,7 @@ function sendMessage() {
       history.push({role: userName || "user", text: msg});
       saveMemory();
 
-      // Direct keyword routing (your backgrounds/links)
+      // 1) Direct commands (your section untouched)
       let found = false;
       const msgLow = msg.toLowerCase();
       for (const key in backgrounds) {
@@ -1060,7 +966,7 @@ function sendMessage() {
       }
       if (found) return;
 
-      // Otherwise use knowledge + memory + continuity
+      // 2) Knowledge + Memory fallback
       const reply = smartReply(msg);
       speak(reply);
       history.push({role:"tiffy", text:reply});
@@ -1103,12 +1009,10 @@ function sendMessage() {
       }
     }
 
-    // Enter-to-send
     document.getElementById('messageBox').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') sendMessage();
     });
 
-    // cold start: if userName present, adjust UI
     if (userName) {
       document.getElementById("userName").style.display = "none";
       document.getElementById("changeName").style.display = "inline-block";
