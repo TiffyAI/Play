@@ -641,8 +641,7 @@
        link: "https://www.tiffyai.co.za"
       }
       };
-
-    /***********************
+      /***********************
  * State & Memory
  ***********************/
 let history = [];
@@ -688,7 +687,7 @@ loadMemory();
 function startTiffy() {
   const startBtn = document.getElementById("startButton");
   if (startBtn) startBtn.style.display = "none";
-  speak("Hey, ! Ready when you are.");
+  speak("Hey, I'm Tiffy! Ready when you are.");
 }
 
 /***********************
@@ -888,197 +887,6 @@ function startMic() {
   if (recognition) recognition.start();
 }
 
-
-
-
-    /***********************
-     * Start button
-     ***********************/
-    document.getElementById("startTiffy").addEventListener("click", () => {
-      const nameEl = document.getElementById("userName");
-      const typed = (nameEl && nameEl.value) ? nameEl.value.trim() : "";
-      if (typed) {
-        userName = typed;
-        localStorage.setItem("tiffyUserName", userName);
-        nameEl.style.display = "none";
-        document.getElementById("changeName").style.display = "inline-block";
-      }
-      const voices = speechSynthesis.getVoices();
-      const select = document.getElementById("voiceSelect");
-      if (voices && voices.length>0 && select.selectedIndex >= 0) {
-        selectedVoice = voices[select.selectedIndex];
-      } else { selectedVoice = null; }
-      voiceReady = true;
-
-      const greet = greetings[Math.floor(Math.random()*greetings.length)];
-      const pickName = userName ? nickname(userName) : null;
-      const introLine = userName
-        ? `${greet} Hello ${pickName}, I’ll guide you through the ecosystem.`
-        : "Hey, I’d love to know your name so I can guide you better. Please type it in the name box above and press Start again.";
-
-      speak(introLine, () => {
-        if (userName) {
-          setTimeout(()=> {
-            document.getElementById("loadingScreen").style.opacity = "0";
-            setTimeout(()=> {
-              document.getElementById("loadingScreen").style.display = "none";
-              document.getElementById("chatPanel").style.display = "flex";
-            }, 800);
-          }, 600);
-          history.push({role:"tiffy", text:introLine});
-          saveMemory();
-        }
-      });
-    });
-
-    document.getElementById("changeName").addEventListener("click", () => {
-      document.getElementById("userName").style.display = "inline-block";
-      document.getElementById("userName").value = userName || "";
-      document.getElementById("changeName").style.display = "none";
-    });
-
-
-      // claim continuity: if item mentions words from last claim, boost
-      const lc = norm(lastClaim);
-      if (lc) {
-        for (const pair of (item.responses || [])) {
-          const joined = norm((pair||[]).join(" "));
-          if (lc && joined.includes(lastNWords(lc,3).join(" "))) { score += 2; break; }
-        }
-      }
-      return score;
-    }
-
-    // Pick a response pair from knowledge
-    function pickKnowledgeReply(userMsg) {
-      if (!Array.isArray(knowledge) || knowledge.length === 0) return null;
-      const lastUserTurn = [...history].reverse().find(h=>h.role !== "tiffy")?.text || "";
-      let best = null, bestScore = -1;
-
-      for (const item of knowledge) {
-        const sc = scoreKnowledgeItem(item, userMsg, lastUserTurn, lastBotClaim);
-        if (sc > bestScore) { bestScore = sc; best = item; }
-      }
-      if (!best || !Array.isArray(best.responses) || best.responses.length===0) return null;
-
-      // choose a pair, then stitch into one line with a little variability
-      const pair = best.responses[Math.floor(Math.random()*best.responses.length)];
-      const nick = nickname(userName);
-      const line1 = (pair[0]||"").replace("${userName}", nick);
-      const line2 = (pair[1]||"").replace("${userName}", nick);
-
-      // Lightweight persona garnish
-      const joiners = [
-        `${line1} ${line2}`,
-        `${line1} — ${line2}`,
-        `${line1}. ${line2}`
-      ];
-      let out = joiners[Math.floor(Math.random()*joiners.length)];
-
-      // Update claim if the line "promises" something (basic heuristic)
-      if (/new game|try this|i can|let me|i’ll|i will|let's/i.test(out)) {
-        saveClaim(out.substring(0, 160)); // keep it short
-      }
-      return out;
-    }
-
-    /***********************
-     * Fallback small talk using recent memory + promos
-     ***********************/
-    function memorySmallTalk() {
-      const recent = history.slice(-3).map(h => `${h.role}: ${h.text}`).join(" | ") || "nothing yet";
-      const promo = ecosystemPromos[Math.floor(Math.random()*ecosystemPromos.length)];
-      const nick = nickname(userName) || "friend";
-      const spunky = [
-        `Oh ${nick}, I remember we talked about: ${recent}.`,
-        `Haha ${nick}, that memory's still fresh: ${recent}.`,
-        `${nick}, you keep surprising me — earlier we had: ${recent}.`
-      ];
-      const memoryLine = spunky[Math.floor(Math.random()*spunky.length)];
-      return `${memoryLine} ${promo}`;
-    }
-
-    /***********************
-     * Smart reply (keywords -> link, else knowledge -> memory)
-     ***********************/
-    function smartReply(userMsg) {
-      // 1) Knowledge JSON
-      const know = pickKnowledgeReply(userMsg);
-      if (know) return know;
-
-      // 2) Memory fallback
-      return memorySmallTalk();
-    }
-
-    /***********************
-     * Send message handler
-     ***********************/
-    function sendMessage() {
-      const box = document.getElementById('messageBox');
-      const msg = (box.value || "").trim();
-      if (!msg) return;
-      box.value = "";
-
-      history.push({role: userName || "user", text: msg});
-      saveMemory();
-
-      // Direct keyword routing (your backgrounds/links)
-      let found = false;
-      const msgLow = msg.toLowerCase();
-      for (const key in backgrounds) {
-        if (msgLow.includes(key)) {
-          const arr = backgrounds[key].responses || [backgrounds[key].response];
-          const reply = arr[Math.floor(Math.random() * arr.length)];
-          swapBackground(backgrounds[key].url);
-          speak(reply);
-          history.push({role:"tiffy", text:reply}); saveMemory();
-          saveClaim(reply);
-          setTimeout(()=> { try { window.open(backgrounds[key].link, "_blank"); } catch(e){} }, 4000);
-          found = true;
-          break;
-        }
-      }
-      if (found) return;
-
-      // Otherwise use knowledge + memory + continuity
-      const reply = smartReply(msg);
-      speak(reply);
-      history.push({role:"tiffy", text:reply});
-      saveMemory();
-      saveClaim(reply);
-    }
-
-    
-    /***********************
-     * Microphone STT
-     ***********************/
-    function startMic() {
-      try {
-        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Recognition) { speak("Sorry, speech recognition isn't supported in your browser."); return; }
-        const recognition = new Recognition();
-        recognition.lang = "en-US";
-        recognition.start();
-        recognition.onresult = function(event) {
-          const transcript = event.results[0][0].transcript;
-          document.getElementById('messageBox').value = transcript;
-          sendMessage();
-        };
-      } catch (e) {
-        speak("Microphone access failed.");
-      }
-    }
-
-    // Enter-to-send
-    document.getElementById('messageBox').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') sendMessage();
-    });
-
-    // cold start: if userName present, adjust UI
-    if (userName) {
-      document.getElementById("userName").style.display = "none";
-      document.getElementById("changeName").style.display = "inline-block";
-    }
   </script>
 </body>
 </html>
