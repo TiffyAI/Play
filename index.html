@@ -781,22 +781,17 @@
 
   return out;
 }
+const fallbackOptions = [
+        "I’m not sure I caught that — want me to explain how blue keys work?",
+        "Hmm, interesting... but tell me, are you here to play or to earn?",
+        "That one slipped past me, but I can always guide you through games, staking, or the presale."
+      ];
+      return randomFrom(fallbackOptions);
+    }
 
-function findBestResponse(userInput) {
-      const words = userInput.toLowerCase().split(/\s+/);
-
-      // Search knowledge.json
-      for (const item of knowledgeBase) {
-        if (item.keywords.some(k => words.includes(k))) {
-          lastTopic = item;
-          return randomFrom(item.responses.flat());
-        }
-      }
-
-      // If we have a topic in memory, try to stay on track
-      if (lastTopic) {
-        return randomFrom(lastTopic.responses.flat());
-      }
+    function randomFrom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
     /***********************
      * Fallback small talk using recent memory + promos
      ***********************/
