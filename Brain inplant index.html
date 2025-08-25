@@ -864,29 +864,60 @@ function lastNWords(s, n=3){
 }
 
 /***********************
- * brainstorm.txt (forward-thinking fallback)
+ * brainstorm.txt (forward-thinking fallback with localStorage caching + safe fallback)
  ***********************/
+const BRAIN_KEY = "tiffyBrainstormCache";
+const BRAIN_AT = "tiffyBrainstormCacheAt";
+const BRAIN_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+
 let brainstormLines = [];
+
 async function loadbrainstorm() {
   try {
+    const now = Date.now();
+    const cached = localStorage.getItem(BRAIN_KEY);
+    const cachedAt = parseInt(localStorage.getItem(BRAIN_AT) || "0", 10);
+
+    // ✅ use cache if valid
+    if (cached && (now - cachedAt) < BRAIN_TTL_MS) {
+      brainstormLines = JSON.parse(cached) || [];
+      return;
+    }
+
+    // ✅ otherwise fetch fresh
     const res = await fetch("brainstorm.txt", { cache:"no-cache" });
     const text = await res.text();
-    brainstormLines = text.split("\n").map(l => l.trim()).filter(Boolean);
+
+    brainstormLines = text.split("\n")
+      .map(l => l.trim())
+      .filter(Boolean);
+
+    // ✅ try storing in localStorage (safe)
+    try {
+      localStorage.setItem(BRAIN_KEY, JSON.stringify(brainstormLines));
+      localStorage.setItem(BRAIN_AT, String(now));
+    } catch (e) {
+      console.warn("Brainstorm cache too large, using session-only memory.", e);
+      // Fallback: just keep in memory (no cache)
+    }
+
   } catch (err) {
     console.warn("brainstorm file not loaded", err);
     brainstormLines = [];
   }
 }
+
 function brainstormReply(msg) {
   if (!brainstormLines.length) return null;
   const words = (msg||"").trim().split(/\s+/).filter(Boolean);
   if (words.length < 3) return null;
   const last3 = words.slice(-3).join(" ").toLowerCase();
-  // must contain last 3 words and end with " ..." (space then three dots)
+
   for (const line of brainstormLines) {
     const low = line.toLowerCase();
+    // must contain last 3 words AND end with " ..."
     if (low.includes(last3) && /\s\.\.\.$/.test(line)) {
-      return line.replace(/\s\.\.\.$/, ""); // remove trailing " ..."
+      return line.replace(/\s\.\.\.$/, ""); // strip " ..."
     }
   }
   return null;
