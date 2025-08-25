@@ -885,9 +885,10 @@ async function loadBrainstorm() {
       return;
     }
 
-    // ✅ Otherwise fetch fresh
+    // ✅ Otherwise fetch fresh, adding a timestamp to bust the cache.
     console.log("Fetching brainstorm.txt from server...");
-    const res = await fetch("brainstorm.txt", { cache: "no-cache" });
+    const cacheBusterUrl = `brainstorm.txt?v=${Date.now()}`;
+    const res = await fetch(cacheBusterUrl, { cache: "no-cache" });
     if (!res.ok) {
       throw new Error(`HTTP error! Status: ${res.status}`);
     }
