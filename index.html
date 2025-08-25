@@ -927,10 +927,23 @@ function brainstormReply(msg) {
 
   // Find a matching line
   for (const line of brainstormLines) {
-    // Check if the line contains the last 3 words AND ends with " ..."
-    if (line.toLowerCase().includes(last3) && line.endsWith(" ...")) {
-      // Return the line with " ..." removed
-      return line.slice(0, -4);
+    const lowerLine = line.toLowerCase();
+    
+    // Check if the line contains the last 3 words
+    if (lowerLine.includes(last3)) {
+      
+      // Check for the specific response format.
+      // This will use the line regardless of whether there is a space before the dots.
+      if (line.endsWith(" ...") || line.endsWith("...")) {
+        
+        // Remove the dots and return the line.
+        // It will remove the last 4 characters if there's a space, or 3 if there isn't.
+        if (line.endsWith(" ...")) {
+          return line.slice(0, -4);
+        } else {
+          return line.slice(0, -3);
+        }
+      }
     }
   }
 
