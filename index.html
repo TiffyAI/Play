@@ -462,8 +462,10 @@ async function processMessage(message) {
 
   // 2. If no keyword match, try the brainstorm file
   if (!reply) {
-    // This function will now use the pre-loaded global brainstormContent
-    reply = brainstormReply(message);
+    const matchingReplies = brainstormReply(message);
+    if (matchingReplies && matchingReplies.length > 0) {
+      reply = matchingReplies[Math.floor(Math.random() * matchingReplies.length)];
+    }
   }
 
   // 3. If no brainstorm match, use a promo
@@ -482,9 +484,10 @@ async function processMessage(message) {
     }
   } else {
     // Check if the reply is from the brainstorm file and contains a URL
-    const brainstormLine = findBrainstormLine(message);
-    if (brainstormLine && brainstormLine.includes("https://")) {
-      const urlMatch = brainstormLine.match(/(https?:\/\/[^\s]+)/);
+    const matchingLines = findBrainstormLines(message);
+    if (matchingLines && matchingLines.length > 0) {
+      const selectedLine = matchingLines[Math.floor(Math.random() * matchingLines.length)];
+      const urlMatch = selectedLine.match(/(https?:\/\/[^\s]+)/);
       if (urlMatch) {
         window.open(urlMatch[0], '_blank');
       }
@@ -496,6 +499,7 @@ async function processMessage(message) {
  * Brainstorm logic
  ***********************/
 function brainstormReply(message) {
+  const matchingReplies = [];
   // Use the pre-loaded global brainstormContent variable
   for (let i = 0; i < brainstormContent.length; i++) {
     const line = brainstormContent[i];
@@ -512,14 +516,15 @@ function brainstormReply(message) {
     const allKeywordsMatch = keywords.every(keyword => message.includes(keyword));
 
     if (allKeywordsMatch) {
-      return replyText; // Return the full reply string
+      matchingReplies.push(replyText);
     }
   }
-  return null; // Return null if no matching reply is found
+  return matchingReplies;
 }
 
-// Helper function to find the full line from brainstorm.txt
-function findBrainstormLine(message) {
+// Helper function to find all matching lines from brainstorm.txt
+function findBrainstormLines(message) {
+  const matchingLines = [];
   for (let i = 0; i < brainstormContent.length; i++) {
     const line = brainstormContent[i];
     if (line.trim() === "") continue;
@@ -531,10 +536,10 @@ function findBrainstormLine(message) {
     const allKeywordsMatch = keywords.every(keyword => message.includes(keyword));
 
     if (allKeywordsMatch) {
-      return line.trim();
+      matchingLines.push(line.trim());
     }
   }
-  return null;
+  return matchingLines;
 }
 
 
