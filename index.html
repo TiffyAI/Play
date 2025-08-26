@@ -220,7 +220,6 @@
 /***********************
  * Global Variables
  ***********************/
-// Restore all original greetings and promos
 const greetings = [
   "Well hello sunshine , I’ve been waiting for you!",
   "Look who’s back! Let’s dive into some fun!",
@@ -242,7 +241,6 @@ const fallbackResponses = [
   "Sorry, I'm a little fuzzy on that one. What can I help you with?"
 ];
 
-// Restore all original ecosystem entries and their responses
 const backgrounds = {
   "tetris": {
     url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
@@ -460,9 +458,8 @@ async function processMessage(message) {
   let link = null;
   let bgKey = null;
 
-  // 1. Check for hard-coded keywords first
+  // 1. Check for hard-coded keywords first (original logic)
   for (const key in backgrounds) {
-    // This check is the original logic from your file
     if (message.includes(key.toLowerCase())) {
       reply = backgrounds[key].responses[Math.floor(Math.random() * backgrounds[key].responses.length)];
       link = backgrounds[key].link;
@@ -521,19 +518,51 @@ async function processMessage(message) {
  ***********************/
 function brainstormReply(message) {
   const matchingReplies = [];
-  const messageWords = message.split(' ').map(word => word.trim());
+  const messageWords = message.split(/\s+/).filter(word => word.length > 0).map(word => word.trim());
+  const lastWords = messageWords.slice(-3); // Get the last 3 words for prioritizing matches
+  
+  // First, check for a match based on the last 3 words of the user's message
+  let bestMatch = null;
+  let highestMatchCount = 0;
   
   for (let i = 0; i < brainstormContent.length; i++) {
     const line = brainstormContent[i];
     const parts = line.split(" ...");
     if (parts.length < 2) continue;
 
-    const keywords = parts[0].toLowerCase().trim().split(" ");
+    const keywords = parts[0].toLowerCase().split(/\s+/).filter(word => word.length > 0);
     const replyText = parts[1].trim();
     
-    // Improved matching: check if any of the brainstorm keywords are a full word match in the message
+    // Count how many of the last three words match the keywords
+    let currentMatchCount = 0;
+    for (const word of lastWords) {
+      if (keywords.includes(word)) {
+        currentMatchCount++;
+      }
+    }
+    
+    // If this line has more matches than the previous best, it's the new best match
+    if (currentMatchCount > highestMatchCount) {
+      bestMatch = replyText;
+      highestMatchCount = currentMatchCount;
+    }
+  }
+
+  // If a best match was found with the last words, return it immediately
+  if (bestMatch) {
+    matchingReplies.push(bestMatch);
+    return matchingReplies;
+  }
+  
+  // If no match on last 3 words, fall back to matching any word
+  for (let i = 0; i < brainstormContent.length; i++) {
+    const line = brainstormContent[i];
+    const parts = line.split(" ...");
+    if (parts.length < 2) continue;
+    const keywords = parts[0].toLowerCase().split(/\s+/).filter(word => word.length > 0);
+    const replyText = parts[1].trim();
+
     const hasMatch = keywords.some(keyword => {
-      // Find the keyword as a whole word, not just a substring
       return messageWords.includes(keyword);
     });
 
@@ -541,26 +570,55 @@ function brainstormReply(message) {
       matchingReplies.push(replyText);
     }
   }
+  
   return matchingReplies;
 }
 
 // Helper function to find all matching lines from brainstorm.txt
 function findBrainstormLines(message) {
   const matchingLines = [];
-  const messageWords = message.split(' ').map(word => word.trim());
+  const messageWords = message.split(/\s+/).filter(word => word.length > 0).map(word => word.trim());
+  const lastWords = messageWords.slice(-3);
+  
+  let bestMatchLine = null;
+  let highestMatchCount = 0;
 
   for (let i = 0; i < brainstormContent.length; i++) {
     const line = brainstormContent[i];
     const parts = line.split(" ...");
     if (parts.length < 2) continue;
 
-    const keywords = parts[0].toLowerCase().trim().split(" ");
+    const keywords = parts[0].toLowerCase().split(/\s+/).filter(word => word.length > 0);
+    let currentMatchCount = 0;
+    for (const word of lastWords) {
+      if (keywords.includes(word)) {
+        currentMatchCount++;
+      }
+    }
+    
+    if (currentMatchCount > highestMatchCount) {
+      bestMatchLine = line.trim();
+      highestMatchCount = currentMatchCount;
+    }
+  }
+  
+  if (bestMatchLine) {
+    matchingLines.push(bestMatchLine);
+    return matchingLines;
+  }
+
+  for (let i = 0; i < brainstormContent.length; i++) {
+    const line = brainstormContent[i];
+    const parts = line.split(" ...");
+    if (parts.length < 2) continue;
+    const keywords = parts[0].toLowerCase().split(/\s+/).filter(word => word.length > 0);
+    
     const hasMatch = keywords.some(keyword => {
       return messageWords.includes(keyword);
     });
 
     if (hasMatch) {
-      matchingLines.push(line);
+      matchingLines.push(line.trim());
     }
   }
   return matchingLines;
