@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Readability Test</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1 {
+            color: #00f0ff;
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 0;
+        }
+
+        .status-box {
+            background-color: #3b3b3b;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #4f4f4f;
+            text-align: center;
+            font-weight: bold;
+            color: #ffeb3b;
+        }
+
+        .content-display {
+            background-color: #3b3b3b;
+            border-radius: 8px;
+            padding: 20px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            border: 1px solid #4f4f4f;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        button {
+            padding: 12px 24px;
+            background-color: #00f0ff;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 240, 255, 0.3);
+        }
+
+        button:hover {
+            background-color: #4df9ff;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .message-box {
+            background-color: #3b3b3b;
+            color: #e0e0e0;
+            padding: 10px;
+            border-radius: 8px;
+            display: none; /* Hidden by default */
+            margin-top: 10px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>File Readability Test</h1>
+        <div class="status-box" id="statusBox">Click "Read File Aloud" to start the test.</div>
+        <div class="content-display" id="contentDisplay"></div>
+        <button id="readButton">Read File Aloud</button>
+    </div>
+
+    <script>
+        // Use a self-invoking function to avoid global variables
+        (async function() {
+            // Get references to the UI elements
+            const statusBox = document.getElementById('statusBox');
+            const contentDisplay = document.getElementById('contentDisplay');
+            const readButton = document.getElementById('readButton');
+
+            // The URL of the brainstorm.txt file on your GitHub Pages site
+            const fileUrl = 'https://tiffyai.github.io/Play/brainstorm.txt';
+
+            /**
+             * Handles reading the text file in chunks to avoid synthesis failures
+             * on large files. It splits the text by line and reads each line sequentially.
+             * @param {string} text - The full text content to be read.
+             */
+            const readTextInChunks = (text) => {
+                // Split the text into an array of lines and filter out any empty lines.
+                const lines = text.split('\n').filter(line => line.trim() !== '');
+                let lineIndex = 0;
+
+                /**
+                 * Recursive function to speak the next line in the array.
+                 */
+                const speakNextLine = () => {
+                    // Check if there are still lines to speak.
+                    if (lineIndex < lines.length) {
+                        const utterance = new SpeechSynthesisUtterance(lines[lineIndex]);
+                        utterance.lang = 'en-US';
+                        utterance.rate = 1.2;
+
+                        // Event listener for when the speech starts.
+                        utterance.onstart = () => {
+                            statusBox.textContent = `Reading line ${lineIndex + 1} of ${lines.length}...`;
+                            readButton.disabled = true; // Disable the button while speaking.
+                        };
+
+                        // Event listener for when the speech ends.
+                        utterance.onend = () => {
+                            lineIndex++;
+                            speakNextLine(); // Recursively call to speak the next line.
+                        };
+
+                        // Event listener for any errors during speech.
+                        utterance.onerror = (event) => {
+                            statusBox.textContent = `An error occurred during speech. Error: ${event.error}`;
+                            readButton.disabled = false; // Re-enable the button.
+                            console.error('SpeechSynthesis error:', event.error);
+                        };
+
+                        // Start the speech.
+                        window.speechSynthesis.speak(utterance);
+                    } else {
+                        // All lines have been spoken.
+                        statusBox.textContent = 'Finished reading.';
+                        readButton.disabled = false;
+                    }
+                };
+
+                // Start the process if there are lines to speak.
+                if (lines.length > 0) {
+                    speakNextLine();
+                } else {
+                    statusBox.textContent = 'The file is empty.';
+                }
+            };
+
+            /**
+             * Function to handle reading the text file from the URL.
+             */
+            const readFile = async () => {
+                // Update the status to inform the user that the fetching process has started.
+                statusBox.textContent = 'Attempting to fetch the file from the URL...';
+                contentDisplay.textContent = 'Please wait...';
+
+                try {
+                    // Use the fetch API to make a request to the file URL.
+                    // The 'no-cache' option ensures we get the latest version.
+                    const response = await fetch(fileUrl, {
+                        cache: 'no-cache'
+                    });
+
+                    // Check if the response was successful (status code 200).
+                    if (!response.ok) {
+                        // If the response is not OK, throw an error with the status message.
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    // Get the text content from the response.
+                    const text = await response.text();
+
+                    // Display the content in the content display box.
+                    contentDisplay.textContent = text;
+                    statusBox.textContent = 'File loaded successfully!';
+                    
+                    // Call the new function to read the text in chunks.
+                    readTextInChunks(text);
+
+                } catch (error) {
+                    // If an error occurs (e.g., network error, file not found), update the status.
+                    statusBox.textContent = `Error: Failed to load file. Check the browser console for details.`;
+                    contentDisplay.textContent = `An error occurred: ${error.message}`;
+                    console.error('Fetch error:', error);
+                }
+            };
+
+            // Add a click event listener to the button.
+            readButton.addEventListener('click', () => {
+                // Stop any current speech before starting a new one.
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                }
+                readFile();
+            });
+
+        })();
+    </script>
+</body>
+</html>
