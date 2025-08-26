@@ -220,6 +220,7 @@
 /***********************
  * Global Variables
  ***********************/
+// Restore all original greetings and promos
 const greetings = [
   "Well hello sunshine , I’ve been waiting for you!",
   "Look who’s back! Let’s dive into some fun!",
@@ -233,7 +234,15 @@ const ecosystemPromos = [
   "Maybe test a game, then snag some TIFFY on the website while the presale lasts."
 ];
 
-// Your existing ecosystem entries
+// Fallback responses when no match is found
+const fallbackResponses = [
+  "Hmm, I didn't quite get that. Could you try rephrasing?",
+  "I'm not sure what you mean. Ask me about a game or the ecosystem!",
+  "My circuits are buzzing... I don't recognize that command. Try something like 'Play Tetris' or 'Tell me about the tokens'!",
+  "Sorry, I'm a little fuzzy on that one. What can I help you with?"
+];
+
+// Restore all original ecosystem entries and their responses
 const backgrounds = {
   "tetris": {
     url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Tetris%20Launch.mp4",
@@ -329,6 +338,7 @@ const backgrounds = {
 
 // Global variable to store the brainstorm content
 let brainstormContent = [];
+let consecutiveFallbackCount = 0; // Track consecutive fallbacks
 
 /***********************
  * Initialization
@@ -348,8 +358,8 @@ async function loadBrainstormFile() {
     }
     const text = await response.text();
     // Split the text into lines and store it in the global variable
-    brainstormContent = text.split('\n');
-    console.log("Brainstorm file loaded successfully.");
+    brainstormContent = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    console.log("Brainstorm file loaded successfully with " + brainstormContent.length + " lines.");
   } catch (error) {
     console.error("Failed to fetch brainstorm file:", error);
   }
@@ -452,6 +462,7 @@ async function processMessage(message) {
 
   // 1. Check for hard-coded keywords first
   for (const key in backgrounds) {
+    // This check is the original logic from your file
     if (message.includes(key.toLowerCase())) {
       reply = backgrounds[key].responses[Math.floor(Math.random() * backgrounds[key].responses.length)];
       link = backgrounds[key].link;
@@ -460,17 +471,27 @@ async function processMessage(message) {
     }
   }
 
-  // 2. If no keyword match, try the brainstorm file
+  // 2. If no keyword match, try the brainstorm file with a new, better matching logic
   if (!reply) {
     const matchingReplies = brainstormReply(message);
-    if (matchingReplies && matchingReplies.length > 0) {
+    if (matchingReplies.length > 0) {
       reply = matchingReplies[Math.floor(Math.random() * matchingReplies.length)];
+      // Reset fallback count since we found a match
+      consecutiveFallbackCount = 0; 
     }
   }
 
-  // 3. If no brainstorm match, use a promo
+  // 3. Fallback logic
   if (!reply) {
-    reply = ecosystemPromos[Math.floor(Math.random() * ecosystemPromos.length)];
+    consecutiveFallbackCount++;
+    if (consecutiveFallbackCount < 3) {
+      // Use a generic "I didn't understand" response first
+      reply = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+    } else {
+      // After 3 failures, use the promo message
+      reply = ecosystemPromos[Math.floor(Math.random() * ecosystemPromos.length)];
+      consecutiveFallbackCount = 0; // Reset after showing promo
+    }
   }
 
   if (reply) {
@@ -485,7 +506,7 @@ async function processMessage(message) {
   } else {
     // Check if the reply is from the brainstorm file and contains a URL
     const matchingLines = findBrainstormLines(message);
-    if (matchingLines && matchingLines.length > 0) {
+    if (matchingLines.length > 0) {
       const selectedLine = matchingLines[Math.floor(Math.random() * matchingLines.length)];
       const urlMatch = selectedLine.match(/(https?:\/\/[^\s]+)/);
       if (urlMatch) {
@@ -500,22 +521,23 @@ async function processMessage(message) {
  ***********************/
 function brainstormReply(message) {
   const matchingReplies = [];
-  // Use the pre-loaded global brainstormContent variable
+  const messageWords = message.split(' ').map(word => word.trim());
+  
   for (let i = 0; i < brainstormContent.length; i++) {
     const line = brainstormContent[i];
-    if (line.trim() === "") continue;
-
-    // Split the line into keywords and the reply part
     const parts = line.split(" ...");
-    if (parts.length < 2) continue; // Skip lines without "..."
+    if (parts.length < 2) continue;
 
     const keywords = parts[0].toLowerCase().trim().split(" ");
     const replyText = parts[1].trim();
     
-    // Check if AT LEAST ONE keyword is in the user's message
-    const someKeywordsMatch = keywords.some(keyword => message.includes(keyword));
+    // Improved matching: check if any of the brainstorm keywords are a full word match in the message
+    const hasMatch = keywords.some(keyword => {
+      // Find the keyword as a whole word, not just a substring
+      return messageWords.includes(keyword);
+    });
 
-    if (someKeywordsMatch) {
+    if (hasMatch) {
       matchingReplies.push(replyText);
     }
   }
@@ -525,19 +547,20 @@ function brainstormReply(message) {
 // Helper function to find all matching lines from brainstorm.txt
 function findBrainstormLines(message) {
   const matchingLines = [];
+  const messageWords = message.split(' ').map(word => word.trim());
+
   for (let i = 0; i < brainstormContent.length; i++) {
     const line = brainstormContent[i];
-    if (line.trim() === "") continue;
-
     const parts = line.split(" ...");
     if (parts.length < 2) continue;
 
     const keywords = parts[0].toLowerCase().trim().split(" ");
-    // Change to some() for less strict matching
-    const someKeywordsMatch = keywords.some(keyword => message.includes(keyword));
+    const hasMatch = keywords.some(keyword => {
+      return messageWords.includes(keyword);
+    });
 
-    if (someKeywordsMatch) {
-      matchingLines.push(line.trim());
+    if (hasMatch) {
+      matchingLines.push(line);
     }
   }
   return matchingLines;
