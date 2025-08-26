@@ -886,9 +886,9 @@ async function loadBrainstorm() {
     }
 
     // ✅ Otherwise fetch fresh, adding a timestamp to bust the cache.
-    console.log("Fetching brainstorm.txt from server...");
-    const cacheBusterUrl = `brainstorm.txt?v=${Date.now()}`;
-const res = await fetch(cacheBusterUrl, { cache: "reload" }); // <-- CHANGED HERE
+    const BRAINSTORM_URL = "https://tiffyai.github.io/Play/brainstorm.txt";
+    const cacheBusterUrl = `${BRAINSTORM_URL}?v=${Date.now()}`;
+    const res = await fetch(cacheBusterUrl, { cache: "reload" });
     if (!res.ok) {
       throw new Error(`HTTP error! Status: ${res.status}`);
     }
