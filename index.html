@@ -194,16 +194,6 @@
 
   <!-- Chat Panel -->
   <div id="chatPanel">
-    <div id="viz" class="hidden">
-      <div class="voice-visualizer">
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-      </div>
-    </div>
     <div style="position:relative; width:100%;">
       <input type="text" id="messageBox" placeholder="Ask Tiffy a question..." autocomplete="off">
       <button id="micButton" onclick="startMic()">
@@ -213,7 +203,6 @@
         <img src="https://tiffyai.github.io/send-icon.png" alt="Send">
       </button>
     </div>
-    <button id="refreshVoices" class="glass-button">Refresh Voices</button>
   </div>
   
   <script>
@@ -377,16 +366,10 @@ function speak(text) {
   }
 
   if (speechSynthesisSupported) {
-    const viz = document.getElementById("viz");
-    if (viz) {
-      viz.classList.remove("hidden");
-    }
     const utterance = new SpeechSynthesisUtterance(text);
     speakingUtterance = utterance;
     if (tiffyVoice) utterance.voice = tiffyVoice;
     utterance.rate = 1.2;
-    utterance.onend = () => { if (viz) viz.classList.add("hidden"); };
-    utterance.onerror = () => { if (viz) viz.classList.add("hidden"); };
     window.speechSynthesis.speak(utterance);
   } else {
     console.log("SpeechSynthesis not supported. Text to speak:", text);
@@ -675,11 +658,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (speechSynthesisSupported) {
         window.speechSynthesis.onvoiceschanged = refreshVoiceList;
         refreshVoiceList();
-    }
-
-    const refreshVoicesButton = document.getElementById("refreshVoices");
-    if (refreshVoicesButton) {
-        refreshVoicesButton.addEventListener('click', refreshVoiceList);
     }
 
     const startTiffyButton = document.getElementById("startTiffy");
