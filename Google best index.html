@@ -864,97 +864,54 @@ function lastNWords(s, n = 3) {
 }
 
 /***********************
- * brainstorm.txt (forward-thinking fallback with localStorage caching + safe fallback)
+ * Brainstorm logic
  ***********************/
-const BRAIN_KEY = "tiffyBrainstormCache";
-const BRAIN_AT = "tiffyBrainstormCacheAt";
-const BRAIN_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+function brainstormReply(message) {
+  const matchingReplies = [];
+  const messageWords = message.split(' ').map(word => word.trim());
+  
+  for (let i = 0; i < brainstormContent.length; i++) {
+    const line = brainstormContent[i];
+    const parts = line.split(" ...");
+    if (parts.length < 2) continue;
 
-let brainstormLines = [];
+    const keywords = parts[0].toLowerCase().trim().split(" ");
+    const replyText = parts[1].trim();
+    
+    // Improved matching: check if any of the brainstorm keywords are a full word match in the message
+    const hasMatch = keywords.some(keyword => {
+      // Find the keyword as a whole word, not just a substring
+      return messageWords.includes(keyword);
+    });
 
-async function loadBrainstorm() {
-  try {
-    const now = Date.now();
-    const cached = localStorage.getItem(BRAIN_KEY);
-    const cachedAt = parseInt(localStorage.getItem(BRAIN_AT) || "0", 10);
-
-    // ✅ Use cache if valid
-    if (cached && (now - cachedAt) < BRAIN_TTL_MS) {
-      console.log("Loading brainstorm from localStorage cache.");
-      brainstormLines = JSON.parse(cached) || [];
-      return;
+    if (hasMatch) {
+      matchingReplies.push(replyText);
     }
-
-    // ✅ Otherwise fetch fresh, adding a timestamp to bust the cache.
-    console.log("Fetching brainstorm.txt from server...");
-    const cacheBusterUrl = `brainstorm.txt?v=${Date.now()}`;
-const res = await fetch(cacheBusterUrl, { cache: "reload" }); // <-- CHANGED HERE
-    if (!res.ok) {
-      throw new Error(`HTTP error! Status: ${res.status}`);
-    }
-    const text = await res.text();
-
-    brainstormLines = text.split("\n")
-      .map(l => l.trim())
-      .filter(Boolean);
-
-    // ✅ Try storing in localStorage (safe)
-    try {
-      localStorage.setItem(BRAIN_KEY, JSON.stringify(brainstormLines));
-      localStorage.setItem(BRAIN_AT, String(now));
-      console.log("Brainstorm loaded and cached successfully.");
-    } catch (e) {
-      console.warn("Brainstorm cache failed: File too large or other issue. Using session-only memory.", e);
-      // Fallback: just keep in memory (no cache)
-    }
-
-  } catch (err) {
-    console.warn("Brainstorm file not loaded:", err);
-    brainstormLines = [];
   }
+  return matchingReplies;
 }
 
-function brainstormReply(msg) {
-  // Check if the brainstorm file has loaded and has content
-  if (!brainstormLines.length) {
-    console.warn("brainstormLines array is empty. Cannot find a reply from brainstorm.txt.");
-    return null;
-  }
+// Helper function to find all matching lines from brainstorm.txt
+function findBrainstormLines(message) {
+  const matchingLines = [];
+  const messageWords = message.split(' ').map(word => word.trim());
 
-  // Check if the user's message has at least 3 words
-  const words = (msg || "").trim().split(/\s+/).filter(Boolean);
-  if (words.length < 3) return null;
-  const last3 = words.slice(-3).join(" ").toLowerCase();
+  for (let i = 0; i < brainstormContent.length; i++) {
+    const line = brainstormContent[i];
+    const parts = line.split(" ...");
+    if (parts.length < 2) continue;
 
-  // Find a matching line
-  for (const line of brainstormLines) {
-    const lowerLine = line.toLowerCase();
-    
-    // TEMPORARY DEBUGGING LINE
-    console.log(`Matching: "${last3}" against line: "${lowerLine}"`);
-    
-    // Check if the line contains the last 3 words
-    if (lowerLine.includes(last3)) {
-      
-      // Check for the specific response format.
-      // This will use the line regardless of whether there is a space before the dots.
-      if (line.endsWith(" ...") || line.endsWith("...")) {
-        
-        // Remove the dots and return the line.
-        // It will remove the last 4 characters if there's a space, or 3 if there isn't.
-        if (line.endsWith(" ...")) {
-          return line.slice(0, -4);
-        } else {
-          return line.slice(0, -3);
-        }
-      }
+    const keywords = parts[0].toLowerCase().trim().split(" ");
+    const hasMatch = keywords.some(keyword => {
+      return messageWords.includes(keyword);
+    });
+
+    if (hasMatch) {
+      matchingLines.push(line);
     }
   }
-
-  // No match found
-  return null;
-}
-
+  return matchingLines;
+}   
 /***********************
  * Template resolver (no more {lastTopic} leaks)
  ***********************/
