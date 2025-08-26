@@ -641,96 +641,100 @@ const backgrounds = {
    link: "https://www.tiffyai.co.za"
   }
 };
-   window.addEventListener("load", () => {
+/***********************
+ * State & Memory
+ ***********************/
+let selectedVoice = null;
+let voiceReady = false;
+let userName = localStorage.getItem("tiffyUserName") || "";
+
+// conversation memory + last bot claim for continuity
+let history = JSON.parse(localStorage.getItem("tiffyMemory") || "[]");
+let lastBotClaim = localStorage.getItem("tiffyLastClaim") || ""; // e.g., "new game: Starship TiffyAI"
+function saveMemory() { localStorage.setItem("tiffyMemory", JSON.stringify(history)); }
+function saveClaim(txt) { lastBotClaim = txt || ""; localStorage.setItem("tiffyLastClaim", lastBotClaim); }
+
+// conversation context for knowledge templates (kept small & explicit)
+const CTX_KEY = "tiffyLastContext";
+let lastContext = (() => {
+  try { return JSON.parse(localStorage.getItem(CTX_KEY) || "{}") || {}; }
+  catch { return {}; }
+})();
+function saveContext() {
+  localStorage.setItem(CTX_KEY, JSON.stringify(lastContext || {}));
+}
+function setContext(patch = {}) {
+  lastContext = { ...(lastContext || {}), ...patch };
+  saveContext();
+}
+
+// nickname helper
+function nickname(name) {
+  if (!name) return "friend";
+  if (Math.random() < 0.33) return name + "ey";
+  return name;
+}
+
+/***********************
+ * Voice setup (silent)
+ ***********************/
+function populateVoices() {
+  const select = document.getElementById("voiceSelect");
+  const voices = speechSynthesis.getVoices() || [];
+  select.innerHTML = "";
+  for (let i = 0; i < voices.length; i++) {
+    const v = voices[i];
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = `${v.name} (${v.lang})`;
+    select.appendChild(opt);
+  }
+  if (voices.length > 0) {
+    const idx = select.selectedIndex >= 0 ? select.selectedIndex : 0;
+    select.selectedIndex = idx;
+    selectedVoice = voices[idx];
+  }
+}
+function ensureVoicesLoad(timeout = 3000) {
+  populateVoices();
+  let waited = 0;
+  const iv = setInterval(() => {
+    const voices = speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+      populateVoices();
+      clearInterval(iv);
+    }
+    waited += 200;
+    if (waited >= timeout) clearInterval(iv);
+  }, 200);
+}
+document.getElementById("refreshVoices").addEventListener("click", populateVoices);
+window.addEventListener("load", () => {
   ensureVoicesLoad(2500);
   if (userName) {
     document.getElementById("userName").style.display = "none";
     document.getElementById("changeName").style.display = "inline-block";
-    const g = greetings[Math.floor(Math.random()*greetings.length)];
+    const g = greetings[Math.floor(Math.random() * greetings.length)];
     document.getElementById("greetingText").innerText = g.replace("{name}", nickname(userName));
   }
-  initKnowledge();   // auto-refresh knowledge each session
-  loadBrainstorm();  // 👈 force fetch brainstorm.txt each run
+  initKnowledge(); // auto-refresh knowledge each session
+  loadBrainstorm(); // load forward-thinking text answers
 });
-
 if (speechSynthesis.onvoiceschanged !== undefined) {
   speechSynthesis.onvoiceschanged = populateVoices;
 }
 
 /***********************
- * Brainstorm loader (always refresh + cache fallback)
- ***********************/
-const BRAIN_URL = "https://tiffyai.github.io/Play/brainstorm.txt"; 
-const BRAIN_KEY = "tiffyBrainstormCache";
-let brainstormLines = [];
-
-async function loadBrainstorm() {
-  const now = Date.now();
-
-  try {
-    console.log("🌐 Fetching brainstorm.txt from server...");
-    const res = await fetch(`${BRAIN_URL}?v=${now}`, { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-
-    brainstormLines = text.split("\n").map(l => l.trim()).filter(Boolean);
-    console.log("✅ Brainstorm fetched: " + brainstormLines.length + " lines.");
-
-    // Save into cache for offline fallback
-    try {
-      localStorage.setItem(BRAIN_KEY, JSON.stringify(brainstormLines));
-    } catch (e) {
-      console.warn("⚠️ Could not cache brainstorm:", e);
-    }
-    return;
-  } catch (err) {
-    console.error("❌ Brainstorm fetch failed:", err);
-  }
-
-  // If fetch fails, fallback to cache
-  const cached = localStorage.getItem(BRAIN_KEY);
-  if (cached) {
-    try {
-      brainstormLines = JSON.parse(cached) || [];
-      console.log("⚡ Using cached brainstorm: " + brainstormLines.length + " lines.");
-    } catch (e) {
-      brainstormLines = [];
-    }
-  } else {
-    brainstormLines = [];
-  }
-}
-
-function brainstormReply(msg) {
-  if (!brainstormLines.length) return null;
-
-  const words = (msg || "").trim().split(/\s+/).filter(Boolean);
-  if (words.length < 3) return null;
-
-  const last3 = words.slice(-3).join(" ").toLowerCase();
-
-  for (const line of brainstormLines) {
-    const lowerLine = line.toLowerCase();
-    if (lowerLine.includes(last3)) {
-      if (line.endsWith(" ...")) return line.slice(0, -4);
-      if (line.endsWith("...")) return line.slice(0, -3);
-      return line;
-    }
-  }
-  return null;
-}
-
-/***********************
  * Speak with silent failover
  ***********************/
-function speak(text, callback=null) {
+function speak(text, callback = null) {
   const viz = document.getElementById("viz");
   const face = document.getElementById("tiffyFace");
   viz.classList.remove("hidden");
   if (face) face.classList.add("talking");
 
   if (!('speechSynthesis' in window)) {
-    setTimeout(()=> {
+    setTimeout(() => {
       viz.classList.add("hidden");
       if (face) face.classList.remove("talking");
       if (callback) callback();
@@ -745,7 +749,7 @@ function speak(text, callback=null) {
     const sel = document.getElementById("voiceSelect");
     if (sel && sel.value !== undefined && voices[sel.value]) msg.voice = voices[sel.value];
     else if (selectedVoice) msg.voice = selectedVoice;
-  } catch {}
+  } catch { }
 
   const wordCount = (text || "").trim().split(/\s+/).filter(Boolean).length || 1;
   const estimatedMs = Math.max(800, Math.min(10000, Math.round(wordCount * 160)));
@@ -779,12 +783,12 @@ document.getElementById("startTiffy").addEventListener("click", () => {
   }
   const voices = speechSynthesis.getVoices();
   const select = document.getElementById("voiceSelect");
-  if (voices && voices.length>0 && select.selectedIndex >= 0) {
+  if (voices && voices.length > 0 && select.selectedIndex >= 0) {
     selectedVoice = voices[select.selectedIndex];
   } else { selectedVoice = null; }
   voiceReady = true;
 
-  const greet = greetings[Math.floor(Math.random()*greetings.length)];
+  const greet = greetings[Math.floor(Math.random() * greetings.length)];
   const pickName = userName ? nickname(userName) : null;
   const introLine = userName
     ? `${greet} Hello ${pickName}, I’ll guide you through the ecosystem.`
@@ -792,14 +796,14 @@ document.getElementById("startTiffy").addEventListener("click", () => {
 
   speak(introLine, () => {
     if (userName) {
-      setTimeout(()=> {
+      setTimeout(() => {
         document.getElementById("loadingScreen").style.opacity = "0";
-        setTimeout(()=> {
+        setTimeout(() => {
           document.getElementById("loadingScreen").style.display = "none";
           document.getElementById("chatPanel").style.display = "flex";
         }, 800);
       }, 600);
-      history.push({role:"tiffy", text:introLine});
+      history.push({ role: "tiffy", text: introLine });
       saveMemory();
     }
   });
@@ -810,6 +814,291 @@ document.getElementById("changeName").addEventListener("click", () => {
   document.getElementById("userName").value = userName || "";
   document.getElementById("changeName").style.display = "none";
 });
+
+/***********************
+ * Knowledge Engine (auto-refresh + cache + silent fallback)
+ ***********************/
+const KNOWLEDGE_URL = "https://tiffyai.github.io/Play/knowledge.json";
+const KNOW_CACHE_KEY = "tiffyKnowledgeCache";
+const KNOW_CACHE_AT = "tiffyKnowledgeCacheAt";
+const KNOW_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
+
+let knowledge = []; // array of {keywords, personality, responses:[[line1,line2], ...], topic?, action?}
+
+function initKnowledge() {
+  const now = Date.now();
+  const cached = localStorage.getItem(KNOW_CACHE_KEY);
+  const cachedAt = parseInt(localStorage.getItem(KNOW_CACHE_AT) || "0", 10);
+  if (cached) {
+    try { knowledge = JSON.parse(cached) || []; } catch { knowledge = []; }
+  }
+  // refresh on each session (silent). If it fails, keep cache.
+  fetchWithTimeout(KNOWLEDGE_URL, { cache: "no-cache" }, 4500)
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+      if (Array.isArray(data)) {
+        knowledge = data;
+        localStorage.setItem(KNOW_CACHE_KEY, JSON.stringify(data));
+        localStorage.setItem(KNOW_CACHE_AT, String(now));
+      }
+    })
+    .catch(() => { /* silent */ });
+
+  // If no cache and fetch failed, keep empty -> engine will gracefully fallback.
+}
+
+function fetchWithTimeout(url, opts = {}, timeout = 5000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  return fetch(url, { ...opts, signal: controller.signal })
+    .finally(() => clearTimeout(id));
+}
+
+// Simple normalization
+function norm(s) { return (s || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim(); }
+
+// Extract last N words from a string
+function lastNWords(s, n = 3) {
+  const arr = norm(s).split(" ").filter(Boolean);
+  return arr.slice(-n);
+}
+
+/***********************
+ * brainstorm.txt (forward-thinking fallback with localStorage caching + safe fallback)
+ ***********************/
+const BRAIN_KEY = "tiffyBrainstormCache";
+const BRAIN_AT = "tiffyBrainstormCacheAt";
+const BRAIN_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+
+let brainstormLines = [];
+
+async function loadBrainstorm() {
+  try {
+    const now = Date.now();
+    const cached = localStorage.getItem(BRAIN_KEY);
+    const cachedAt = parseInt(localStorage.getItem(BRAIN_AT) || "0", 10);
+
+    // ✅ Use cache if valid
+    if (cached && (now - cachedAt) < BRAIN_TTL_MS) {
+      console.log("Loading brainstorm from localStorage cache.");
+      brainstormLines = JSON.parse(cached) || [];
+      return;
+    }
+
+    // ✅ Otherwise fetch fresh, adding a timestamp to bust the cache.
+    console.log("Fetching brainstorm.txt from server...");
+    const cacheBusterUrl = `brainstorm.txt?v=${Date.now()}`;
+    const res = await fetch(cacheBusterUrl, { cache: "reload" }); // <-- CHANGED HERE
+    if (!res.ok) {
+      throw new Error(`HTTP error! Status: ${res.status}`);
+    }
+    const text = await res.text();
+
+    brainstormLines = text.split("\n")
+      .map(l => l.trim())
+      .filter(Boolean);
+
+    // ✅ Try storing in localStorage (safe)
+    try {
+      localStorage.setItem(BRAIN_KEY, JSON.stringify(brainstormLines));
+      localStorage.setItem(BRAIN_AT, String(now));
+      console.log("Brainstorm loaded and cached successfully.");
+    } catch (e) {
+      console.warn("Brainstorm cache failed: File too large or other issue. Using session-only memory.", e);
+      // Fallback: just keep in memory (no cache)
+    }
+
+  } catch (err) {
+    console.warn("Brainstorm file not loaded:", err);
+    brainstormLines = [];
+  }
+}
+
+function brainstormReply(msg) {
+  // Check if the brainstorm file has loaded and has content
+  if (!brainstormLines.length) {
+    console.warn("brainstormLines array is empty. Cannot find a reply from brainstorm.txt.");
+    return null;
+  }
+
+  // Check if the user's message has at least 3 words
+  const words = (msg || "").trim().split(/\s+/).filter(Boolean);
+  if (words.length < 3) return null;
+  const last3 = words.slice(-3).join(" ").toLowerCase();
+
+  // Find a matching line
+  for (const line of brainstormLines) {
+    const lowerLine = line.toLowerCase();
+    
+    // TEMPORARY DEBUGGING LINE
+    console.log(`Matching: "${last3}" against line: "${lowerLine}"`);
+    
+    // Check if the line contains the last 3 words
+    if (lowerLine.includes(last3)) {
+      
+      // Check for the specific response format.
+      // This will use the line regardless of whether there is a space before the dots.
+      if (line.endsWith(" ...") || line.endsWith("...")) {
+        
+        // Remove the dots and return the line.
+        // It will remove the last 4 characters if there's a space, or 3 if there isn't.
+        if (line.endsWith(" ...")) {
+          return line.slice(0, -4);
+        } else {
+          return line.slice(0, -3);
+        }
+      }
+    }
+  }
+
+  // No match found
+  return null;
+}
+
+/***********************
+ * Template resolver (no more {lastTopic} leaks)
+ ***********************/
+function resolveTemplate(text) {
+  if (!text) return "";
+  const map = {
+    "{lastTopic}": lastContext?.lastTopic || "that",
+    "{lastLinkHint}": lastContext?.lastLinkHint || "the right page",
+    "{lastCommand}": lastContext?.lastCommand || "show me",
+    "${userName}": nickname(userName || "friend"),
+  };
+  let out = text;
+  for (const k in map) {
+    out = out.split(k).join(map[k]);
+  }
+  // second pass: if something like {} remains, strip braces
+  out = out.replace(/\{[^}]+\}/g, "").replace(/\s+/g, " ").trim();
+  return out;
+}
+
+/***********************
+ * Action pusher (open links / route to backgrounds)
+ ***********************/
+function tiffyPushCommand(action) {
+  if (!action || !action.type) return;
+  if (action.type === "link" && action.url) {
+    // open after a short beat so speech can start
+    setTimeout(() => { try { window.open(action.url, "_blank"); } catch (e) { } }, 600);
+    setContext({ lastLinkHint: action.url, lastAction: "link" });
+  } else if (action.type === "background" && action.key && backgrounds?.[action.key]) {
+    const bg = backgrounds[action.key];
+    swapBackground(bg.url);
+    setContext({
+      lastLinkHint: bg.link || "",
+      lastAction: "background",
+      lastTopic: action.key
+    });
+    if (bg.link) {
+      setTimeout(() => { try { window.open(bg.link, "_blank"); } catch (e) { } }, 1200);
+    }
+  }
+}
+
+/***********************
+ * Knowledge scoring + reply picker (with action + context)
+ ***********************/
+function scoreKnowledgeItem(item, msg, lastUser, lastClaim) {
+  let score = 0;
+  const msgTokens = new Set(norm(msg).split(" ").filter(Boolean));
+  const lastTokens = new Set(lastNWords(lastUser, 3));
+  const claimTokens = new Set(lastNWords(lastClaim, 4));
+
+  if (Array.isArray(item.keywords)) {
+    for (const k of item.keywords) {
+      const kk = norm(k);
+      if (kk && (msgTokens.has(kk) || lastTokens.has(kk) || claimTokens.has(kk))) score += 3;
+    }
+  }
+
+  const last3 = lastNWords(lastUser, 3).join(" ");
+  if (last3) {
+    for (const pair of (item.responses || [])) {
+      const joined = norm((pair || []).join(" "));
+      if (joined.includes(last3)) { score += 4; break; }
+    }
+  }
+
+  const lc = norm(lastClaim);
+  if (lc) {
+    for (const pair of (item.responses || [])) {
+      const joined = norm((pair || []).join(" "));
+      if (lc && joined.includes(lastNWords(lc, 3).join(" "))) { score += 2; break; }
+    }
+  }
+
+  // tiny boost if item has an action (makes it more “helpful”)
+  if (item.action && item.action.type) score += 1;
+
+  return score;
+}
+
+function pickKnowledgeReply(userMsg) {
+  if (!Array.isArray(knowledge) || knowledge.length === 0) return null;
+  const lastUserTurn = [...history].reverse().find(h => h.role !== "tiffy")?.text || "";
+  let best = null, bestScore = -1;
+
+  for (const item of knowledge) {
+    const sc = scoreKnowledgeItem(item, userMsg, lastUserTurn, lastBotClaim);
+    if (sc > bestScore) { bestScore = sc; best = item; }
+  }
+  if (!best || !Array.isArray(best.responses) || best.responses.length === 0) return null;
+
+  // assemble natural response (choose a pair)
+  const pair = best.responses[Math.floor(Math.random() * best.responses.length)];
+  const line1 = resolveTemplate(pair[0] || "");
+  const line2 = resolveTemplate(pair[1] || "");
+  let out = [line1, line2].filter(Boolean).join(" ");
+
+  // context update: lastTopic from explicit topic or from a keyword hint
+  const topicGuess = best.topic || (Array.isArray(best.keywords) ? best.keywords[0] : "");
+  const linkHint = (best.action && best.action.url) ? best.action.url : (lastContext.lastLinkHint || "");
+  setContext({
+    lastTopic: topicGuess || lastContext.lastTopic || "",
+    lastLinkHint: linkHint
+  });
+
+  // If the JSON item includes an action, execute it (and optionally add an acknowledgement)
+  if (best.action && best.action.type) {
+    tiffyPushCommand(best.action);
+    // small, natural suffix acknowledging the action without relying on {lastCommand}
+    if (best.action.type === "link") {
+      out += " Opening it for you now.";
+    } else if (best.action.type === "background") {
+      out += " Loading it up — you’re in!";
+    }
+  }
+
+  // If this reply has any "promise-y" language, keep claim short
+  if (/new game|try this|i can|let me|i’ll|i will|let's/i.test(out)) {
+    saveClaim(out.substring(0, 160));
+  }
+  return out;
+}
+
+/***********************
+ * Fallback small talk using Brainstorm forward-thinking + promos
+ ***********************/
+function memorySmallTalk(msg) {
+  // 1) Try Brainstorm forward-thinking line
+  const b = brainstormReply(msg);
+  if (b) return b;
+
+  // 2) Spunky promo fallback (forward vibes, not lastTopic loops)
+  const recent = history.slice(-3).map(h => `${h.role}: ${h.text}`).join(" | ") || "nothing yet";
+  const promo = ecosystemPromos[Math.floor(Math.random() * ecosystemPromos.length)];
+  const nick = nickname(userName) || "friend";
+  const spunky = [
+    `Oh ${nick}, that’s a fresh angle — I like it.`,
+    `Haha ${nick}, curveball received — exploring that next.`,
+    `${nick}, I love where your head’s at — let’s make it fun.`
+  ];
+  const memoryLine = spunky[Math.floor(Math.random() * spunky.length)];
+  return `${memoryLine} ${promo}`;
+}
 
 /***********************
  * Smart reply (keywords -> link/background, else knowledge -> brainstorm -> promos)
@@ -832,7 +1121,7 @@ function sendMessage() {
   if (!msg) return;
   box.value = "";
 
-  history.push({role: userName || "user", text: msg});
+  history.push({ role: userName || "user", text: msg });
   saveMemory();
 
   // Direct keyword routing (your backgrounds/links) — UNTOUCHED
@@ -844,7 +1133,7 @@ function sendMessage() {
       const reply = arr[Math.floor(Math.random() * arr.length)];
       swapBackground(backgrounds[key].url);
       speak(reply);
-      history.push({role:"tiffy", text:reply}); saveMemory();
+      history.push({ role: "tiffy", text: reply }); saveMemory();
       saveClaim(reply);
 
       // remember context when a direct command triggers
@@ -852,10 +1141,10 @@ function sendMessage() {
         lastTopic: key,
         lastLinkHint: backgrounds[key].link || "",
         lastAction: "background",
-        lastCommand: key
+        lastCommand: key // helps templates, but never required
       });
 
-      setTimeout(()=> { try { window.open(backgrounds[key].link, "_blank"); } catch(e){} }, 4000);
+      setTimeout(() => { try { window.open(backgrounds[key].link, "_blank"); } catch (e) { } }, 4000);
       found = true;
       break;
     }
@@ -865,7 +1154,7 @@ function sendMessage() {
   // Otherwise use knowledge + brainstorm + promos
   const reply = smartReply(msg);
   speak(reply);
-  history.push({role:"tiffy", text:reply});
+  history.push({ role: "tiffy", text: reply });
   saveMemory();
   saveClaim(reply);
 }
@@ -878,7 +1167,7 @@ function swapBackground(url) {
   if (!video) return;
   if (url.endsWith(".mp4") || url.endsWith(".webm")) {
     video.src = url;
-    try { video.load(); video.play(); } catch(e){}
+    try { video.load(); video.play(); } catch (e) { }
     document.querySelector("#background").setAttribute("src", "#bgvideo");
   } else {
     document.querySelector("#background").setAttribute("src", url);
@@ -895,7 +1184,7 @@ function startMic() {
     const recognition = new Recognition();
     recognition.lang = "en-US";
     recognition.start();
-    recognition.onresult = function(event) {
+    recognition.onresult = function (event) {
       const transcript = event.results[0][0].transcript;
       document.getElementById('messageBox').value = transcript;
       sendMessage();
@@ -917,4 +1206,5 @@ if (userName) {
 }
 </script>
 </body>
+
 </html>
