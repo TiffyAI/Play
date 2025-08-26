@@ -641,65 +641,175 @@ const backgrounds = {
    link: "https://www.tiffyai.co.za"
   }
 };
-   /***********************
- * brainstorm.txt (forward-thinking fallback with localStorage caching + safe fallback)
- ***********************/
-const BRAIN_KEY = "tiffyBrainstormCache";
-const BRAIN_AT = "tiffyBrainstormCacheAt";
-const BRAIN_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+   window.addEventListener("load", () => {
+  ensureVoicesLoad(2500);
+  if (userName) {
+    document.getElementById("userName").style.display = "none";
+    document.getElementById("changeName").style.display = "inline-block";
+    const g = greetings[Math.floor(Math.random()*greetings.length)];
+    document.getElementById("greetingText").innerText = g.replace("{name}", nickname(userName));
+  }
+  initKnowledge();   // auto-refresh knowledge each session
+  loadBrainstorm();  // 👈 force fetch brainstorm.txt each run
+});
 
+if (speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = populateVoices;
+}
+
+/***********************
+ * Brainstorm loader (always refresh + cache fallback)
+ ***********************/
+const BRAIN_URL = "https://tiffyai.github.io/Play/brainstorm.txt"; 
+const BRAIN_KEY = "tiffyBrainstormCache";
 let brainstormLines = [];
 
-async function loadBrainstorm() {   // ✅ fixed name (capital B)
+async function loadBrainstorm() {
+  const now = Date.now();
+
   try {
-    const now = Date.now();
-    const cached = localStorage.getItem(BRAIN_KEY);
-    const cachedAt = parseInt(localStorage.getItem(BRAIN_AT) || "0", 10);
-
-    // ✅ use cache if valid
-    if (cached && (now - cachedAt) < BRAIN_TTL_MS) {
-      brainstormLines = JSON.parse(cached) || [];
-      return;
-    }
-
-    // ✅ otherwise fetch fresh
-    const res = await fetch("brainstorm.txt", { cache:"no-cache" });
-    if (!res.ok) throw new Error("Network error");
+    console.log("🌐 Fetching brainstorm.txt from server...");
+    const res = await fetch(`${BRAIN_URL}?v=${now}`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
 
-    brainstormLines = text.split("\n")
-      .map(l => l.trim())
-      .filter(Boolean);
+    brainstormLines = text.split("\n").map(l => l.trim()).filter(Boolean);
+    console.log("✅ Brainstorm fetched: " + brainstormLines.length + " lines.");
 
-    // ✅ try storing in localStorage (safe)
+    // Save into cache for offline fallback
     try {
       localStorage.setItem(BRAIN_KEY, JSON.stringify(brainstormLines));
-      localStorage.setItem(BRAIN_AT, String(now));
     } catch (e) {
-      console.warn("Brainstorm cache too large, using session-only memory.", e);
+      console.warn("⚠️ Could not cache brainstorm:", e);
     }
-
+    return;
   } catch (err) {
-    console.warn("brainstorm file not loaded", err);
+    console.error("❌ Brainstorm fetch failed:", err);
+  }
+
+  // If fetch fails, fallback to cache
+  const cached = localStorage.getItem(BRAIN_KEY);
+  if (cached) {
+    try {
+      brainstormLines = JSON.parse(cached) || [];
+      console.log("⚡ Using cached brainstorm: " + brainstormLines.length + " lines.");
+    } catch (e) {
+      brainstormLines = [];
+    }
+  } else {
     brainstormLines = [];
   }
 }
 
 function brainstormReply(msg) {
   if (!brainstormLines.length) return null;
-  const words = (msg||"").trim().split(/\s+/).filter(Boolean);
+
+  const words = (msg || "").trim().split(/\s+/).filter(Boolean);
   if (words.length < 3) return null;
+
   const last3 = words.slice(-3).join(" ").toLowerCase();
 
   for (const line of brainstormLines) {
-    const low = line.toLowerCase();
-    // must contain last 3 words AND end with " ..."
-    if (low.includes(last3) && /\s\.\.\.$/.test(line)) {
-      return line.replace(/\s\.\.\.$/, ""); // strip " ..."
+    const lowerLine = line.toLowerCase();
+    if (lowerLine.includes(last3)) {
+      if (line.endsWith(" ...")) return line.slice(0, -4);
+      if (line.endsWith("...")) return line.slice(0, -3);
+      return line;
     }
   }
   return null;
 }
+
+/***********************
+ * Speak with silent failover
+ ***********************/
+function speak(text, callback=null) {
+  const viz = document.getElementById("viz");
+  const face = document.getElementById("tiffyFace");
+  viz.classList.remove("hidden");
+  if (face) face.classList.add("talking");
+
+  if (!('speechSynthesis' in window)) {
+    setTimeout(()=> {
+      viz.classList.add("hidden");
+      if (face) face.classList.remove("talking");
+      if (callback) callback();
+    }, 800);
+    return;
+  }
+
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.rate = 1; msg.pitch = 1; msg.volume = 1; msg.lang = "en-US";
+  try {
+    const voices = speechSynthesis.getVoices();
+    const sel = document.getElementById("voiceSelect");
+    if (sel && sel.value !== undefined && voices[sel.value]) msg.voice = voices[sel.value];
+    else if (selectedVoice) msg.voice = selectedVoice;
+  } catch {}
+
+  const wordCount = (text || "").trim().split(/\s+/).filter(Boolean).length || 1;
+  const estimatedMs = Math.max(800, Math.min(10000, Math.round(wordCount * 160)));
+  const fallbackMs = estimatedMs + 800;
+  let done = false;
+  const finish = () => {
+    if (done) return; done = true;
+    viz.classList.add("hidden");
+    if (face) face.classList.remove("talking");
+    if (callback) callback();
+  };
+  const fallback = setTimeout(finish, fallbackMs);
+  msg.onend = () => { clearTimeout(fallback); finish(); };
+  msg.onerror = () => { clearTimeout(fallback); finish(); };
+
+  try { speechSynthesis.cancel(); speechSynthesis.speak(msg); }
+  catch { clearTimeout(fallback); finish(); }
+}
+
+/***********************
+ * Start button
+ ***********************/
+document.getElementById("startTiffy").addEventListener("click", () => {
+  const nameEl = document.getElementById("userName");
+  const typed = (nameEl && nameEl.value) ? nameEl.value.trim() : "";
+  if (typed) {
+    userName = typed;
+    localStorage.setItem("tiffyUserName", userName);
+    nameEl.style.display = "none";
+    document.getElementById("changeName").style.display = "inline-block";
+  }
+  const voices = speechSynthesis.getVoices();
+  const select = document.getElementById("voiceSelect");
+  if (voices && voices.length>0 && select.selectedIndex >= 0) {
+    selectedVoice = voices[select.selectedIndex];
+  } else { selectedVoice = null; }
+  voiceReady = true;
+
+  const greet = greetings[Math.floor(Math.random()*greetings.length)];
+  const pickName = userName ? nickname(userName) : null;
+  const introLine = userName
+    ? `${greet} Hello ${pickName}, I’ll guide you through the ecosystem.`
+    : "Hey, I’d love to know your name so I can guide you better. Please type it in the name box above and press Start again.";
+
+  speak(introLine, () => {
+    if (userName) {
+      setTimeout(()=> {
+        document.getElementById("loadingScreen").style.opacity = "0";
+        setTimeout(()=> {
+          document.getElementById("loadingScreen").style.display = "none";
+          document.getElementById("chatPanel").style.display = "flex";
+        }, 800);
+      }, 600);
+      history.push({role:"tiffy", text:introLine});
+      saveMemory();
+    }
+  });
+});
+
+document.getElementById("changeName").addEventListener("click", () => {
+  document.getElementById("userName").style.display = "inline-block";
+  document.getElementById("userName").value = userName || "";
+  document.getElementById("changeName").style.display = "none";
+});
 
 /***********************
  * Smart reply (keywords -> link/background, else knowledge -> brainstorm -> promos)
