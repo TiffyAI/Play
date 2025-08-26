@@ -801,11 +801,11 @@ async function loadBrainstorm() {
 function brainstormReply(msg) {
   if (!brainstormLines.length) return null;
   const words = (msg||"").trim().split(/\s+/).filter(Boolean);
-  if (words.length < 3) return null;
-  const last3 = words.slice(-3).join(" ").toLowerCase();
+  if (words.length < 2) return null;
+  const last2 = words.slice(-2).join(" ").toLowerCase();
   for (const line of brainstormLines) {
     const low = line.toLowerCase();
-    if (low.includes(last3) && low.endsWith(" ...")) {
+    if (low.includes(last2) && low.endsWith(" ...")) {
       return line.replace(/\s\.\.\.$/, ""); 
     }
   }
