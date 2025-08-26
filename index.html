@@ -512,10 +512,10 @@ function brainstormReply(message) {
     const keywords = parts[0].toLowerCase().trim().split(" ");
     const replyText = parts[1].trim();
     
-    // Check if ALL keywords are in the user's message
-    const allKeywordsMatch = keywords.every(keyword => message.includes(keyword));
+    // Check if AT LEAST ONE keyword is in the user's message
+    const someKeywordsMatch = keywords.some(keyword => message.includes(keyword));
 
-    if (allKeywordsMatch) {
+    if (someKeywordsMatch) {
       matchingReplies.push(replyText);
     }
   }
@@ -533,9 +533,10 @@ function findBrainstormLines(message) {
     if (parts.length < 2) continue;
 
     const keywords = parts[0].toLowerCase().trim().split(" ");
-    const allKeywordsMatch = keywords.every(keyword => message.includes(keyword));
+    // Change to some() for less strict matching
+    const someKeywordsMatch = keywords.some(keyword => message.includes(keyword));
 
-    if (allKeywordsMatch) {
+    if (someKeywordsMatch) {
       matchingLines.push(line.trim());
     }
   }
