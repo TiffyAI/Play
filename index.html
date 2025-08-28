@@ -167,9 +167,34 @@
   <a-assets>
     <video id="bgvideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/zone.mp4"></video>
   </a-assets>
+
+  <!-- Background video -->
   <a-sky id="background" src="#bgvideo"></a-sky>
+
+  <!-- Floating holographic welcome text -->
+  <a-entity text="value: Welcome to TiffyAI Portal; color: #00f0ff; align: center; width: 6;"
+            position="0 2.5 -3"
+            animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"></a-entity>
+
+  <!-- Pulsing glow light -->
+  <a-entity light="type: point; color: #00f0ff; intensity: 1.5; distance: 8"
+            position="0 1.6 0"
+            animation="property: light.intensity; from: 0.5; to: 2; dir: alternate; loop: true; dur: 2000"></a-entity>
+
+  <!-- Stars particle system -->
+  <a-entity particle-system="preset: dust; particleCount: 2000; size: 1; color: #00f0ff, #ffffff"></a-entity>
+
+  <!-- Camera -->
   <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
 </a-scene>
+
+<script>
+  window.addEventListener("load", () => {
+    const vid = document.getElementById("bgvideo");
+    vid.muted = true;
+    vid.play().catch(err => console.warn("Autoplay blocked:", err));
+  });
+</script>
 
 <!-- Glass interface -->
 <div class="glass-panel" id="chatPanel" style="display:none;">
