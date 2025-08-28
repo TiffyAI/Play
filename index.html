@@ -752,14 +752,17 @@ document.getElementById("startTiffy").addEventListener("click", () => {
     nameEl.style.display = "none";
     document.getElementById("changeName").style.display = "inline-block";
   }
+
   const voices = speechSynthesis.getVoices();
   const select = document.getElementById("voiceSelect");
-  if (voices && voices.length>0 && select.selectedIndex >= 0) {
+  if (voices && voices.length > 0 && select.selectedIndex >= 0) {
     selectedVoice = voices[select.selectedIndex];
-  } else { selectedVoice = null; }
+  } else {
+    selectedVoice = null;
+  }
   voiceReady = true;
 
-  const greet = greetings[Math.floor(Math.random()*greetings.length)];
+  const greet = greetings[Math.floor(Math.random() * greetings.length)];
   const pickName = userName ? nickname(userName) : null;
   const introLine = userName
     ? `${greet} Hello ${pickName}, I’ll guide you through the ecosystem.`
@@ -767,14 +770,14 @@ document.getElementById("startTiffy").addEventListener("click", () => {
 
   speak(introLine, () => {
     if (userName) {
-      setTimeout(()=> {
+      setTimeout(() => {
         document.getElementById("loadingScreen").style.opacity = "0";
-        setTimeout(()=> {
+        setTimeout(() => {
           document.getElementById("loadingScreen").style.display = "none";
           document.getElementById("chatPanel").style.display = "flex";
         }, 800);
       }, 600);
-      history.push({role:"tiffy", text:introLine});
+      history.push({ role: "tiffy", text: introLine });
       saveMemory();
     }
   });
@@ -785,6 +788,91 @@ document.getElementById("changeName").addEventListener("click", () => {
   document.getElementById("userName").value = userName || "";
   document.getElementById("changeName").style.display = "none";
 });
+
+/***********************
+ * Speak helper
+ ***********************/
+function speak(text, onend) {
+  if (!text) return;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  if (selectedVoice) {
+    utterance.voice = selectedVoice;
+  }
+
+  // Animate Tiffy’s lips + visualization while speaking
+  utterance.onstart = () => {
+    tiffyTalking(true);
+    startVisualizer();
+    glowMessageBox(true);
+  };
+
+  // Reset face + visualization when done
+  utterance.onend = () => {
+    tiffyTalking(false);
+    stopVisualizer();
+    glowMessageBox(false);
+    if (onend) onend();
+  };
+
+  speechSynthesis.speak(utterance);
+}
+
+/***********************
+ * Face switcher
+ ***********************/
+function tiffyTalking(on) {
+  const face = document.getElementById("tiffyFace");
+  if (!face) return;
+  face.src = on ? "faceit.gif" : "face.png";
+}
+
+/***********************
+ * Visualizer (loading screen only)
+ ***********************/
+let vizInterval;
+
+function startVisualizer() {
+  const viz = document.getElementById("viz");
+  if (!viz) return;
+
+  viz.classList.remove("hidden");
+
+  vizInterval = setInterval(() => {
+    const bars = viz.querySelectorAll(".bar");
+    bars.forEach(bar => {
+      const h = Math.floor(Math.random() * 30) + 5; // random height
+      bar.style.height = h + "px";
+    });
+  }, 150);
+}
+
+function stopVisualizer() {
+  const viz = document.getElementById("viz");
+  if (!viz) return;
+
+  clearInterval(vizInterval);
+  viz.classList.add("hidden");
+
+  const bars = viz.querySelectorAll(".bar");
+  bars.forEach(bar => {
+    bar.style.height = "5px";
+  });
+}
+
+/***********************
+ * Message box glow (chat only)
+ ***********************/
+function glowMessageBox(on) {
+  const msgBox = document.getElementById("messageBox");
+  if (!msgBox) return;
+
+  if (on) {
+    msgBox.classList.add("glow");
+  } else {
+    msgBox.classList.remove("glow");
+  }
+}
 
 /***********************
  * Knowledge Engine
