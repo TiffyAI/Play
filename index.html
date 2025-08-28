@@ -66,8 +66,21 @@
       border-color: rgba(0, 200, 255, 0.8);
       transition: box-shadow 0.2s ease-in-out;
     }
+
+    /* Mic pulsing glow effect */
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.4); }
+      50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.9); }
+      100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.4); }
+    }
+
+    .mic-active {
+      background-color: #1f9d55 !important; /* green */
+      animation: pulseGlow 1.2s infinite;
+      border-radius: 6px;
+    }
     
-    #talking { animation: lipMove 0.28s infinite alternate; transform-origin: 50% 60%; }
+    .talking { animation: lipMove 0.28s infinite alternate; transform-origin: 50% 60%; }
     @keyframes lipMove {
       from { transform: scale(1,1); }
       to { transform: scale(1,0.92); }
@@ -1185,15 +1198,32 @@ function swapBackground(url) {
 function startMic() {
   try {
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Recognition) { speak("Sorry, speech recognition isn't supported in your browser."); return; }
+    if (!Recognition) { 
+      speak("Sorry, speech recognition isn't supported in your browser."); 
+      return; 
+    }
+
     const recognition = new Recognition();
     recognition.lang = "en-US";
+
+    const micBtn = document.querySelector("#chatPanel button[onclick='startMic()']");
+
+    // Add pulsing glow
+    micBtn.classList.add("mic-active");
+
     recognition.start();
+
     recognition.onresult = function(event) {
       const transcript = event.results[0][0].transcript;
       document.getElementById('messageBox').value = transcript;
       sendMessage();
     };
+
+    recognition.onend = function() {
+      // Remove glow when mic stops
+      micBtn.classList.remove("mic-active");
+    };
+
   } catch (e) {
     speak("Microphone access failed.");
   }
