@@ -132,7 +132,7 @@
   },
 
   {
-    "keywords": ["whitepaper", "paper", "docs", "documentation"],
+    "keywords": ["whitepaper", "paper", "docs", "documentation", " Whitepaper"],
     "personality": "informative",
     "responses": [
       ["TiffyAI Whitepaper v1.1 — the master blueprint.", "Executive Summary, Token Architecture, Staking, Liquidity, dApps, Security, Roadmap — want it opened?"],
@@ -178,17 +178,17 @@
       ["Feeling lucky? Lottery tickets hit different.", "Small bet, spicy upside — want me to show you where to grab one?"],
       ["One ticket could change your week.", "Want me to open the spot to get in?"]
     ],
-    "action": { "type": "link", "url": "https://tiffyai.github.io/Intro" }
+    "action": { "type": "link", "url": "https://www.tiffyai.co.za/tiffiai-token-presale" }
   },
 
   {
-    "keywords": ["blue key", "gold key", "keys", "treasure", "luck wheel", "hidden treasure"],
+    "keywords": ["blue key", "gold key", "keys", "treasure", "luck wheel", "hidden treasure", "blue keys"],
     "personality": "informative",
     "responses": [
       ["Daily claim: 1 $TIFFY + 1 Blue Key.", "Collect 3 for the Luck Wheel, 5 to start Hidden Treasure hunts."],
       ["Stack 10 Blue Keys to forge a Gold Key.", "Gold opens VIP perks — AI-Trading access & liquidity unlocks."]
     ],
-    "action": { "type": "link", "url": "https://tiffyai.github.io/Intro" }
+    "action": { "type": "link", "url": "https://tiffyai.github.io/Alert" }
   },
 
   {
@@ -237,7 +237,7 @@
   },
 
   {
-    "keywords": ["what do you mean", "explain more", "not clear", "confused"],
+    "keywords": ["what do you mean", "explain more", "not clear", "confused", "what" ],
     "personality": "helpful",
     "contextual": true,
     "memoryUsage": "lastTopic",
@@ -251,7 +251,7 @@
     "keywords": ["help", "stuck", "guide", "what can i do", "options"],
     "personality": "supportive",
     "responses": [
-      ["Pick a path: Games, Keys, Staking, or Docs.", "Say a word — I’ll open the right door."],
+      ["Pick a path: Games, Keys, Staking, or Docs, Withdraw, Motion Sphere, main menu and so on.", "Say a word — I’ll open the right door."],
       ["Want me to choose for you?", "I can suggest a game and a reward route based on your vibe."]
     ]
   },
@@ -260,10 +260,10 @@
     "keywords": ["airdrop", "presale", "token price", "buy tiffy"],
     "personality": "marketing",
     "responses": [
-      ["Presale’s looking spicy — discount vs PancakeSwap right now.", "Want me to show you the on-ramp page?"],
-      ["Timing matters — early birds snag the juicier stack.", "Say 'website' and I’ll take you to the source."]
+      ["Presale’s looking spicy — discount on PayPal vs PancakeSwap right now.", "Want me to show you the on-ramp page?"],
+      ["Timing matters — early birds snag the juicier stack on PayPal.", "Say 'website' and I’ll take you to the source."]
     ],
-    "action": { "type": "link", "url": "https://www.tiffyai.co.za" }
+    "action": { "type": "link", "url": "https:// tiffyai.github.io/-TIFFY-Presale" }
   },
 
   {
