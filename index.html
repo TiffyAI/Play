@@ -1112,7 +1112,7 @@ function resolveKnowledgeReply(bestItem) {
   if (bestItem.action && bestItem.action.type) {
     tiffyPushCommand(bestItem.action);
     if (bestItem.action.type === "link") {
-      out += " Opening it for you now.";
+      out += " you see?";
     } else if (bestItem.action.type === "background") {
       out += " Loading it up — you’re in!";
     }
@@ -1138,6 +1138,15 @@ function memorySmallTalk(msg) {
   const nick = nickname(userName) || "friend";
   const spunky = [
     `Oh ${nick}, that’s a fresh angle — I like it.`,
+    `Oh ${nick}, you amazing, I love it.`,
+    `Ah ${nick}, you flatter me — I enjoy it.`,
+    `${nick}, don't think i can do that yet. But I'm learning`,
+    `Oh ${nick}, you so fascinating — I like you.`,
+    `Oh ${nick}, you make my knees weak`,
+    `You know ${nick}, i haven't met anyone like you before.`,
+    `Gee ${nick}, try rephrase that slightly please`,
+    `Hey ${nick}, can I show you something first.`,
+    `Oh ${nick}, all in good time — lets make it happen.`,
     `Haha ${nick}, curveball received — exploring that next.`,
     `${nick}, I love where your head’s at — let’s make it fun.`
   ];
