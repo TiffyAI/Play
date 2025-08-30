@@ -1098,7 +1098,6 @@
   {
     "keywords": [
       "music",
-      "tunes",
       "song",
       "artist",
       "playlist",
@@ -1107,21 +1106,16 @@
     "personality": "groovy",
     "responses": [
       [
-        "Let's get this party started! What do you want to hear? A specific song, an artist, or a mood?",
-        "Tell me what you're in the mood for, and I'll find the perfect beat on YouTube Music."
+        "Let's get this party started! I'll open a music player for you in a new window.",
+        "Need some tunes to fuel your hustle? I've got you covered."
       ],
       [
-        "Need some tunes to fuel your hustle? I've got you covered.",
-        "Just tell me what to play!"
+        "Ready for a beat? Just click the link I'll send you!"
       ]
     ],
     "action": {
-      "type": "api",
-      "method": "youtube_music.play",
-      "args": {
-        "query": "{query}",
-        "media_intent_type": "youtube_music.MediaIntentType.CONVERSATIONAL_RADIO"
-      }
+      "type": "link",
+      "url": "https://music.youtube.com/search?q=tify+ai+music"
     }
   },
   {
@@ -1134,23 +1128,18 @@
     "personality": "artistic",
     "responses": [
       [
-        "I'm feeling creative. What masterpiece shall we bring to life? Describe the image you want me to generate.",
+        "I'm feeling creative. I'll open an AI image generator for you in a new tab.",
         "Give me a prompt, and let's make some digital art together!"
       ],
       [
-        "Ready to see something amazing? My image generator is standing by.",
+        "Ready to see something amazing? I'll open a creative tool for you to play with.",
         "What do you want to see? The more details, the better!"
       ]
     ],
     "action": {
-      "type": "api",
-      "method": "image_generation.generate_images",
-      "args": {
-        "prompts": [
-          "{query}"
-        ],
-        "image_generation_usecase": "image_generation.ImageGenerationUsecase.ALTERNATIVES"
-      }
+      "type": "link",
+      "url": "https://www.google.com/search?q=ai+image+generator"
     }
+  }
   }
 ]
