@@ -128,7 +128,7 @@
     ],
     "action": {
       "type": "link",
-      "url": "https://tiffyai.co.za/tiffyai-token-presale"
+      "url": "https://www.tiffyai.co.za/tiffyai-token-presale"
     },
     "contextual": false,
     "memoryUsage": null
@@ -470,6 +470,8 @@
       "contract",
       "source code",
       "verify",
+      "verified",
+      "verification", 
       "sourcify",
       "address"
     ],
