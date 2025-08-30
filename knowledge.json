@@ -599,7 +599,7 @@
       "explain more",
       "not clear",
       "huh",
-      "wtf", 
+      "wtf",
       "confused",
       "what"
     ],
@@ -863,7 +863,7 @@
   },
   {
     "keywords": [
-      "telegram chat",
+      "telegram channel",
       "chat",
       "community",
       "talk to others"
@@ -926,7 +926,7 @@
     ],
     "action": {
       "type": "link",
-      "url": "https://pancakeswap.finance/swap?outputCurrency=0xE488253DD6B4D31431142F1b7601C96f24Fb7dd5"
+      "url": "https://tiffyai.github.io/TIFFY-Market-Value"
     }
   },
   {
@@ -1139,7 +1139,6 @@
     "action": {
       "type": "link",
       "url": "https://www.google.com/search?q=ai+image+generator"
-      }
     }
   }
 ]
