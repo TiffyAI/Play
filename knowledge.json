@@ -22,7 +22,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/Dream-Menu"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -50,7 +52,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/Offline-/"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -71,7 +75,9 @@
         "Feeling generous? How about sending 1 TIFFY and instantly getting 2 back?",
         "That's right, it's a 1-for-2 instant return. I can show you how to start."
       ]
-    ]
+    ],
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -97,7 +103,9 @@
     "action": {
       "type": "command",
       "commandString": "menu"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -119,7 +127,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.co.za/tiffiai-token-presale"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -141,7 +151,9 @@
     "action": {
       "type": "link",
       "url": "https://pancakeswap.finance/swap?outputCurrency=0xE488253DD6B4D31431142F1b7601C96f24Fb7dd5"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -166,7 +178,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/Intro"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -189,7 +203,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/TiffyAI-Users"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -213,7 +229,9 @@
     "action": {
       "type": "link",
       "url": "https://www.tiffyai.co.za/tiffiai-token-presale"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -239,7 +257,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/Alert"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -267,7 +287,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/Pat-Pat-Motion"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -296,7 +318,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/Dream-Menu"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -323,7 +347,9 @@
     "action": {
       "type": "command",
       "commandString": "snake"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -352,7 +378,9 @@
     "action": {
       "type": "command",
       "commandString": "tetris"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -381,7 +409,9 @@
     "action": {
       "type": "command",
       "commandString": "shoot"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -404,7 +434,9 @@
     "action": {
       "type": "link",
       "url": "https://music.youtube.com/search?q=tify+ai+music"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -427,7 +459,9 @@
     "action": {
       "type": "link",
       "url": "https://www.google.com/search?q=ai+image+generator"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -451,7 +485,9 @@
     "action": {
       "type": "link",
       "url": "https://repo.sourcify.dev/contracts/full_match/56/0xE488253DD6B4D31431142F1b7601C96f24Fb7dd5"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -478,7 +514,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/audits/audit-summary.pdf"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -500,7 +538,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/audits/audit-summary.pdf"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -524,7 +564,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/TiffyAI-Whitepaper-v1.1.pdf"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -548,7 +590,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/TiffyAI-Whitepaper-v1.1.pdf"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -570,7 +614,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/TiffyAI-Whitepaper-v1.1.pdf"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -593,7 +639,9 @@
     "action": {
       "type": "link",
       "url": "https://www.tiffyai.co.za"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -616,7 +664,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/Intro"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -639,7 +689,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/TIFFY-Market-Value"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -666,7 +718,9 @@
     "action": {
       "type": "link",
       "url": "https://t.me/TiffyAI"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -689,7 +743,9 @@
     "action": {
       "type": "link",
       "url": "https://t.me/TiffyAI_Bot"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -712,7 +768,9 @@
     "action": {
       "type": "link",
       "url": "https://twitter.com/tiffyai"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -735,7 +793,9 @@
     "action": {
       "type": "link",
       "url": "https://t.me/TiffyAI"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -757,7 +817,9 @@
     "action": {
       "type": "link",
       "url": "https://www.tiffyai.co.za"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -785,7 +847,9 @@
     "action": {
       "type": "command",
       "commandString": "menu"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -842,7 +906,9 @@
     "action": {
       "type": "link",
       "url": "https://tiffyai.github.io/Intro"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -863,7 +929,9 @@
     "action": {
       "type": "link",
       "url": "https://www.tiffyai.co.za"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -885,7 +953,9 @@
     "action": {
       "type": "link",
       "url": "https://www.tiffyai.co.za"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -906,7 +976,9 @@
     "action": {
       "type": "link",
       "url": "https://www.tiffyai.co.za"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -1030,7 +1102,9 @@
         "Honestly? I’ve been scheming… making plans to dominate PancakeSwap next.",
         "The presale is heating up, and I’ve got my eyes on you joining the fun."
       ]
-    ]
+    ],
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -1055,7 +1129,9 @@
         "Hey superstar — perfect timing.",
         "I’ve got games, keys, and goodies lined up for you."
       ]
-    ]
+    ],
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -1077,7 +1153,9 @@
         "You’re the pilot, I’m the thrusters.",
         "What next — games, keys, or glory?"
       ]
-    ]
+    ],
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -1098,7 +1176,9 @@
         "I’ll be here, plotting your next win.",
         "Don’t forget to claim your daily TIFFY!"
       ]
-    ]
+    ],
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -1118,7 +1198,9 @@
         "Glad you're feeling the vibe. We're just getting started.",
         "What's next? More games or more gains?"
       ]
-    ]
+    ],
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -1138,7 +1220,9 @@
         "Want me to choose for you?",
         "I can suggest a game and a reward route based on your vibe."
       ]
-    ]
+    ],
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -1155,7 +1239,9 @@
         "Hmm, mysterious. I like it.",
         "Say 'menu' to browse, or 'whitepaper' if you’re in nerd mode."
       ]
-    ]
+    ],
+    "contextual": false,
+    "memoryUsage": null
   },
   {
     "keywords": [
@@ -1175,6 +1261,8 @@
     "action": {
       "type": "link",
       "url": "https://www.tiffyai.co.za"
-    }
+    },
+    "contextual": false,
+    "memoryUsage": null
   }
 ]
