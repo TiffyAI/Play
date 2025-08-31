@@ -13,7 +13,7 @@
         "Ready to claim your $TIFFY and your Blue Key? I'll open the portal."
       ],
       [
-        "You can claim 1 $TIFFY and 1 Blue Key every 24 hours.",
+        "You can start claiming TIFFY every 10 minutes and 1 Blue Key every 24 hours.",
         "Ready to collect your daily blessing?"
       ],
       [
@@ -248,7 +248,7 @@
     "personality": "informative",
     "responses": [
       [
-        "Daily claim: 1 $TIFFY + 1 Blue Key.",
+        "Daily claim: TIFFY tokens + 1 Blue Key.",
         "Collect 3 for the Luck Wheel, 5 to start Hidden Treasure hunts."
       ],
       [
@@ -418,6 +418,7 @@
   {
     "keywords": [
       "music",
+      "tunes",
       "song",
       "artist",
       "playlist",
@@ -444,7 +445,9 @@
     "keywords": [
       "generate an image",
       "create a picture",
-      "draw",
+      "draw a",
+      "a photo", 
+      "design me",
       "show me a picture"
     ],
     "personality": "artistic",
@@ -840,7 +843,7 @@
       ],
       [
         "Ohhh, running to the menu already?",
-        "Okay, okay — loading the multiverse cheat panel."
+        "Okay, okay — loading the multiverse portal panel."
       ],
       [
         "Welcome back to the command center. Since you're here, check out the 'Viral Loop' section to get your share link.",
@@ -860,6 +863,7 @@
       "show me the rules",
       "key rules",
       "claim rules",
+      "how does it work",
       "how to claim",
       "how to claim tiffy"
     ],
@@ -917,6 +921,7 @@
     "keywords": [
       "tiffyai",
       "tiffy",
+      "are you",
       "who are you"
     ],
     "personality": "confident",
@@ -939,23 +944,26 @@
   {
     "keywords": [
       "starai",
+      "naughty",
+      "sex",
+      "kiss",
       "dream ai",
       "what's dream ai"
     ],
     "personality": "informative",
     "responses": [
       [
-        "StarAI is my twin. The AI that can trade for you and manage your funds.",
-        "StarAI is the brains behind the scenes, ensuring the Tiffyverse runs smoothly. It's the AI that dreams big."
+        "StarAI is actually me. The AI that can trade for you and manage your funds and even make love.",
+        "StarAI is me, just the brains behind the scenes, ensuring the Tiffyverse runs smoothly. It's the part of me that dreams big."
       ],
       [
         "DreamAI is where I come to life.",
-        "I exist in the DreamAI platform. Ready to explore my home base?"
+        "I actually exist in a few platforms. Ready to explore my home base?"
       ]
     ],
     "action": {
       "type": "link",
-      "url": "https://www.tiffyai.co.za"
+      "url": "https://t.me/TheStarAIBot/StarAI?startapp=aW52aXRhdGlvbl9jb2RlPUsxOXc3dyZwYWdlTmFtZT1hZ2VudHMmSWQ9YWUwNzMzNjQtZTIzZi00ZjQ5LTgzZmItYzM0YjdkMDAxMGJh"
     },
     "contextual": false,
     "memoryUsage": null
