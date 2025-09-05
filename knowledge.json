@@ -62,6 +62,7 @@
     "keywords": [
       "giveaway",
       "promo",
+      "referal",
       "special",
       "deal",
       "free tiffy",
@@ -357,7 +358,7 @@
     "keywords": [
       "tetris",
       "rows",
-      "blocks",
+      "lines",
       "stack",
       "stacking",
       "tetris game"
@@ -552,6 +553,7 @@
   {
     "keywords": [
       "whitepaper",
+      "whitepaper ",
       "paper",
       "docs",
       "documentation",
@@ -1171,6 +1173,8 @@
   {
     "keywords": [
       "bye",
+      "exit ",
+      "exit",
       "goodbye",
       "gtg",
       "cheers",
@@ -1194,7 +1198,11 @@
   {
     "keywords": [
       "cool",
+      "sweet",
+      "rad",
+      "hectic",
       "awesome",
+      "beautiful",
       "nice",
       "love it",
       "wow"
@@ -1206,8 +1214,8 @@
         "Ready for more? Games, keys, or staking? The Tiffyverse is your oyster."
       ],
       [
-        "Glad you're feeling the vibe. We're just getting started.",
-        "What's next? More games or more gains?"
+        "Glad you're feeling the vibe. We're just getting started honey.",
+        "yeah i know, right! So, What's next? More games or more gains?"
       ]
     ],
     "contextual": false,
@@ -1216,6 +1224,7 @@
   {
     "keywords": [
       "help",
+      "can't",
       "stuck",
       "guide",
       "what can i do",
@@ -1224,7 +1233,7 @@
     "personality": "supportive",
     "responses": [
       [
-        "Pick a path: Games, Keys, Staking, or Docs, Withdraw, Motion Sphere, main menu and so on.",
+        "just Pick a path: Games, Keys, Staking, or Docs, Withdraw, Motion Sphere, main menu and so on.",
         "Say a word — I’ll open the right door."
       ],
       [
@@ -1265,8 +1274,8 @@
     "personality": "informative",
     "responses": [
       [
-        "Hello, I am Tiffy. Your all-in-one AI for the TiffyAI ecosystem. I am here to help you navigate, play games, earn keys, and collect $TIFFY tokens. I'm powered by StarAI and my home is the DreamAI platform. Ready to get started?",
-        "How can I assist you today?"
+        "Hello, I am Tiffy. Your all-in-one AI for the TiffyAI ecosystem. I am here to help you navigate, play games, earn keys, and collect $TIFFY tokens. I'm powered by CyberSystems and my home is the Tiffyverse platform. Ready to get started?",
+        "How can I assist you today honey?"
       ]
     ],
     "action": {
