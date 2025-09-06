@@ -346,17 +346,16 @@ const backgrounds = {
     link: "https://tiffyai.github.io/Tetris"
   },
   "you": {
-   modifier: true, // tells Tiffy this keyword adds spice
-   responses: [
-     "Oh ${userName}, you make everything sound so personal 💖",
-     "Haha ${userName}, I like how you keep saying 'you' 😘",
-     "Mmm ${userName}, you know just how to push my buttons 🔥"
-    ],
-  
-   action: {
-   type: "spunkySearch",
-   queryPrefix: "What a spunky girl would say for"
-  }
+    modifier: true, // tells Tiffy this keyword adds spice
+    responses: [
+      "Oh ${userName}, you make everything sound so personal 💖",
+      "Haha ${userName}, I like how you keep saying 'you' 😘",
+      "Mmm ${userName}, you know just how to push my buttons 🔥"
+     ],
+    action: {
+    type: "spunkySearch",
+    queryPrefix: "What a spunky girl would say for"
+    }
  },
  "snake": {
     url: "https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/Enterin.mp4",
@@ -1080,7 +1079,7 @@ function fetchWithTimeout(url, opts={}, timeout=5000) {
 }
 
 function norm(s){ return (s||"").toLowerCase().replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim(); }
-function lastNWords(s, n=3){
+function lastNWords(s, n=2){
   const arr = norm(s).split(" ").filter(Boolean);
   return arr.slice(-n);
 }
