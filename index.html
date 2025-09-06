@@ -823,56 +823,7 @@ const backgrounds = {
    ],
    link: "https://www.tiffyai.co.za"
   },
-  // --- 🧠 Spunky "you" keyword handler ---
-keywords.push({
-  key: "you",
-  action: {
-    type: "spunkySearch",
-    run: function(msg) {
-      const words = msg.split(" ");
-      const youIndex = words.indexOf("you");
-      let lastTwo = "";
-
-      if (youIndex >= 0 && words.length > youIndex + 1) {
-        // take the next 2 words after "you"
-        lastTwo = words.slice(youIndex + 1, youIndex + 3).join(" ").toLowerCase();
-      }
-
-      // Find matching brainstorm line
-      let line = null;
-      if (brainstormLines && brainstormLines.length) {
-        for (const l of brainstormLines) {
-          if (l.includes(", ") && l.toLowerCase().includes(lastTwo)) {
-            line = l;
-            break;
-          }
-        }
-      }
-
-      // Fallback if not found
-      if (!line) {
-        line = `What a spunky girl would say for: "${msg}" 😉`;
-      }
-
-      // Speak the line
-      speak(line);
-      history.push({ role: "tiffy", text: line });
-      saveMemory();
-
-      // 🔮 Generate image with this line
-      generateImage(line).then(imgUrl => {
-        if (imgUrl) {
-          swapBackground(imgUrl);
-
-          // Optional: Save to Vault memory
-          const stored = JSON.parse(localStorage.getItem("tiffyVault") || "[]");
-          stored.push({ line: line, image: imgUrl });
-          localStorage.setItem("tiffyVault", JSON.stringify(stored));
-        }
-      });
-    }
-  }
-});
+  
 /***********************
  * State & Memory
  ***********************/
