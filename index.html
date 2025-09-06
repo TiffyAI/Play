@@ -147,6 +147,10 @@
 </head>
 <body>
 
+  <!-- Loading screen -->
+<div id="loadingScreen">
+  <img id="tiffyFace" src="face.png" alt="Tiffy Face">
+<h2 id="greetingText">Hello, I’m TiffyAI 👋</h2>
   <!-- 🔮 Tiffy Vault Viewer -->
 <div id="vaultViewer" style="
   display:none;
@@ -170,11 +174,6 @@
   <h3 style="margin:5px 0; color:#f0c;">🔮 Tiffy Vault</h3>
   <div id="vaultList"></div>
 </div>
-
-  <!-- Loading screen -->
-<div id="loadingScreen">
-  <img id="tiffyFace" src="face.png" alt="Tiffy Face">
-<h2 id="greetingText">Hello, I’m TiffyAI 👋</h2>
 
 <!-- Commands / quick-help shown on the loading screen -->
 <div id="greetingCommands" style="max-width:560px; text-align:center; color:#e6faff; font-family:sans-serif;">
@@ -351,7 +350,7 @@ const backgrounds = {
       "Oh ${userName}, you make everything sound so personal 💖",
       "Haha ${userName}, I like how you keep saying 'you' 😘",
       "Mmm ${userName}, you know just how to push my buttons 🔥"
-     ],
+    ],
     action: {
     type: "spunkySearch",
     queryPrefix: "What a spunky girl would say for"
