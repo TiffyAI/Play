@@ -824,6 +824,87 @@ const backgrounds = {
    link: "https://www.tiffyai.co.za"
   },
   };
+    /***********************
+ * Keyword Handlers
+ ***********************/
+Object.keys(backgrounds).forEach(key => {
+  keywords.push({
+    key,
+    action: {
+      type: "background",
+      run: function (msg) {
+        const arr = backgrounds[key].responses || [backgrounds[key].response];
+        const reply = arr[Math.floor(Math.random() * arr.length)];
+
+        swapBackground(backgrounds[key].url);
+        speak(reply);
+        history.push({ role: "tiffy", text: reply });
+        saveMemory();
+        saveClaim(reply);
+
+        setContext({
+          lastTopic: key,
+          lastLinkHint: backgrounds[key].link || "",
+          lastAction: "background",
+          lastCommand: key
+        });
+
+        if (backgrounds[key].link) {
+          setTimeout(() => {
+            try { window.open(backgrounds[key].link, "_blank"); } catch (e) {}
+          }, 4000);
+        }
+      }
+    }
+  });
+});
+
+// --- 🧠 Special "you" handler ---
+keywords.push({
+  key: "you",
+  action: {
+    type: "spunkySearch",
+    run: function (msg) {
+      const words = msg.split(" ");
+      const youIndex = words.indexOf("you");
+      let lastTwo = "";
+
+      if (youIndex >= 0 && words.length > youIndex + 1) {
+        lastTwo = words.slice(youIndex + 1, youIndex + 3).join(" ").toLowerCase();
+      }
+
+      // Find brainstorm match
+      let line = null;
+      if (brainstormLines && brainstormLines.length) {
+        for (const l of brainstormLines) {
+          if (l.includes(", ") && l.toLowerCase().includes(lastTwo)) {
+            line = l;
+            break;
+          }
+        }
+      }
+
+      if (!line) {
+        line = `What a spunky girl would say for: "${msg}" 😉`;
+      }
+
+      speak(line);
+      history.push({ role: "tiffy", text: line });
+      saveMemory();
+
+      // 🔮 Generate image for the vault
+      generateImage(line).then(imgUrl => {
+        if (imgUrl) {
+          swapBackground(imgUrl);
+
+          const stored = JSON.parse(localStorage.getItem("tiffyVault") || "[]");
+          stored.push({ line: line, image: imgUrl });
+          localStorage.setItem("tiffyVault", JSON.stringify(stored));
+        }
+      });
+    }
+  }
+});
 /***********************
  * State & Memory
  ***********************/
