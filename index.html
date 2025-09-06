@@ -1331,7 +1331,50 @@ function vaultUse(index) {
     speak(`Loaded your spunky treasure into the world. Enjoy!`);
   }
 }
-    
+    /***********************
+ * Vault Functions
+ ***********************/
+function openVault() {
+  const vaultViewer = document.getElementById("vaultViewer");
+  if (!vaultViewer) return;
+  vaultViewer.style.display = "block";
+  renderVault();
+}
+
+function closeVault() {
+  const vaultViewer = document.getElementById("vaultViewer");
+  if (!vaultViewer) return;
+  vaultViewer.style.display = "none";
+}
+
+function renderVault() {
+  const vaultList = document.getElementById("vaultList");
+  if (!vaultList) return;
+
+  const stored = JSON.parse(localStorage.getItem("tiffyVault") || "[]");
+  if (!stored.length) {
+    vaultList.innerHTML = "<p>No memories saved yet.</p>";
+    return;
+  }
+
+  vaultList.innerHTML = stored.map(entry => `
+    <div style="margin-bottom:10px; padding:6px; border:1px solid #444; border-radius:6px;">
+      <p style="margin:0 0 4px 0; color:#0ff;">${entry.line}</p>
+      ${entry.image ? `<img src="${entry.image}" style="max-width:100%; border-radius:6px; margin-top:4px;" />` : ""}
+      ${entry.video ? `<video src="${entry.video}" controls style="max-width:100%; border-radius:6px; margin-top:4px;"></video>` : ""}
+      <button onclick="setVaultBackground('${entry.image || entry.video}')"
+              style="margin-top:4px; background:#0ff; color:#111; border:none; padding:4px 8px; border-radius:5px; cursor:pointer;">
+        🎭 Set as Background
+      </button>
+    </div>
+  `).join("");
+}
+
+function setVaultBackground(src) {
+  if (!src) return;
+  swapBackground(src);
+}
+
 /***********************
  * Send message handler
  ***********************/
@@ -1343,6 +1386,16 @@ function sendMessage() {
 
   history.push({role: userName || "user", text: msg});
   saveMemory();
+
+  // --- 🔮 Vault trigger ---
+  if (msg.toLowerCase().includes("vault")) {
+    openVault();
+    const reply = "Opening your Tiffy Vault — all your spunky memories and creations live here!";
+    speak(reply);
+    history.push({role:"tiffy", text:reply});
+    saveMemory();
+    return;
+  }
 
   // 🗝️ Special command: vault
   if (msg.toLowerCase() === "vault") {
