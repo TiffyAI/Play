@@ -352,19 +352,7 @@ const backgrounds = {
      "Haha ${userName}, I like how you keep saying 'you' 😘",
      "Mmm ${userName}, you know just how to push my buttons 🔥"
     ],
-    function brainstormReply(msg) {
-  if (!brainstormLines.length) return null;
-  const words = (msg||"").trim().split(/\s+/).filter(Boolean);
-  if (words.length < 2) return null;
-  const last2 = words.slice(-2).join(" ").toLowerCase();
-  for (const line of brainstormLines) {
-    const low = line.toLowerCase();
-    if (low.includes(last2) && low.endsWith(", ")) {
-      return line.replace(/\s\.\.\.$/, ""); 
-    }
-  }
-  return null;
-}
+  
    action: {
    type: "spunkySearch",
    queryPrefix: "What a spunky girl would say for"
