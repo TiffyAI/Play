@@ -147,10 +147,6 @@
 </head>
 <body>
 
-  <!-- Loading screen -->
-<div id="loadingScreen">
-  <img id="tiffyFace" src="face.png" alt="Tiffy Face">
-<h2 id="greetingText">Hello, I’m TiffyAI 👋</h2>
   <!-- 🔮 Tiffy Vault Viewer -->
 <div id="vaultViewer" style="
   display:none;
@@ -174,7 +170,10 @@
   <h3 style="margin:5px 0; color:#f0c;">🔮 Tiffy Vault</h3>
   <div id="vaultList"></div>
 </div>
-
+<!-- Loading screen -->
+<div id="loadingScreen">
+  <img id="tiffyFace" src="face.png" alt="Tiffy Face">
+<h2 id="greetingText">Hello, I’m TiffyAI 👋</h2>
 <!-- Commands / quick-help shown on the loading screen -->
 <div id="greetingCommands" style="max-width:560px; text-align:center; color:#e6faff; font-family:sans-serif;">
   <p style="margin:12px 0 6px 0;">
@@ -1101,7 +1100,7 @@ function brainstormReply(msg) {
   const last2 = words.slice(-2).join(" ").toLowerCase();
   for (const line of brainstormLines) {
     const low = line.toLowerCase();
-    if (low.includes(last2) && low.endsWith(" ...")) {
+    if (low.includes(last2) && low.endsWith(", ")) {
       return line.replace(/\s\.\.\.$/, ""); 
     }
   }
@@ -1177,7 +1176,7 @@ function scoreKnowledgeItem(item, msg, lastUser, lastClaim){
   if (lc) {
     for (const pair of (item.responses || [])) {
       const joined = norm((pair||[]).join(" "));
-      if (lc && joined.includes(lastNWords(lc,3).join(" "))) { score += 2; break; }
+      if (lc && joined.includes(lastNWords(lc,3).join(" "))) { score += 3; break; }
     }
   }
 
