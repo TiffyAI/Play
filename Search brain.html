@@ -142,6 +142,30 @@
     @keyframes bounce { 0%,100%{height:6px} 50%{height:22px} }
 
     .hidden { display: none; }
+    <!-- 🔮 Tiffy Vault Viewer -->
+<div id="vaultViewer" style="
+  display:none;
+  position:fixed; 
+  bottom:10px; 
+  right:10px; 
+  width:320px; 
+  max-height:420px; 
+  overflow:auto; 
+  background:#111; 
+  border:2px solid #f0c; 
+  border-radius:10px; 
+  padding:10px; 
+  z-index:9999; 
+  color:white; 
+  font-family:sans-serif;
+">
+  <div style="text-align:right; margin-bottom:5px;">
+    <button onclick="closeVault()" style="background:#f0c; color:#fff; border:none; padding:4px 8px; border-radius:5px; cursor:pointer;">✖</button>
+  </div>
+  <h3 style="margin:5px 0; color:#f0c;">🔮 Tiffy Vault</h3>
+  <div id="vaultList"></div>
+</div>
+
   </style>
 </head>
 <body>
@@ -1254,6 +1278,59 @@ function smartReply(userMsg) {
 }
 
 /***********************
+ * Vault UI + Background picker
+ ***********************/
+function openVault() {
+  const vaultKey = "TiffyNFTVault";
+  let vault = [];
+  try {
+    vault = JSON.parse(localStorage.getItem(vaultKey) || "[]");
+  } catch {
+    vault = [];
+  }
+
+  const viewer = document.getElementById("vaultViewer");
+  const list = document.getElementById("vaultList");
+
+  if (!vault.length) {
+    list.innerHTML = `<p>No treasures yet. Say something with <b>search</b> to fill the vault!</p>`;
+  } else {
+    list.innerHTML = vault.map((item, i) => {
+      const media = item.imageUrl || "";
+      const isVideo = media.endsWith(".mp4") || media.endsWith(".webm");
+      return `
+        <div style="margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:8px;">
+          <p style="margin:2px 0; font-size:0.9em; color:#ccc;">${item.line}</p>
+          ${media ? (
+            isVideo
+              ? `<video src="${media}" style="max-width:100%; border-radius:5px;" controls></video>`
+              : `<img src="${media}" style="max-width:100%; border-radius:5px;" />`
+          ) : ""}
+          <button onclick="vaultUse(${i})" style="margin-top:5px; background:#0cf; color:#111; border:none; padding:4px 6px; border-radius:4px; cursor:pointer;">Use as Background</button>
+        </div>
+      `;
+    }).join("");
+  }
+
+  viewer.style.display = "block";
+  console.log("🔮 Tiffy NFT Vault:", vault);
+}
+
+function closeVault() {
+  document.getElementById("vaultViewer").style.display = "none";
+}
+
+function vaultUse(index) {
+  const vaultKey = "TiffyNFTVault";
+  let vault = JSON.parse(localStorage.getItem(vaultKey) || "[]");
+  const item = vault[index];
+  if (item && item.imageUrl) {
+    swapBackground(item.imageUrl);
+    speak(`Loaded your spunky treasure into the world. Enjoy!`);
+  }
+}
+    
+/***********************
  * Send message handler
  ***********************/
 function sendMessage() {
@@ -1264,6 +1341,16 @@ function sendMessage() {
 
   history.push({role: userName || "user", text: msg});
   saveMemory();
+
+  // 🗝️ Special command: vault
+  if (msg.toLowerCase() === "vault") {
+    openVault();
+    const reply = `Here’s your vault, ${nickname(userName)} — full of spunky treasures.`;
+    speak(reply);
+    history.push({role:"tiffy", text:reply});
+    saveMemory();
+    return;
+  }
 
   let found = false;
   const msgLow = msg.toLowerCase();
