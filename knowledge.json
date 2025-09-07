@@ -370,7 +370,7 @@
         "Make those rows and flex that brain."
       ],
       [
-        "Blocks on blocks — Tiffy style.",
+        "Get 3 lines in a row and earn a full TIFFY token — Tiffy style.",
         "Don’t let the tower kiss the sky!"
       ],
       [
@@ -447,7 +447,7 @@
       "generate an image",
       "create a picture",
       "draw a",
-      "a photo", 
+      "a photo",
       "design me",
       "show me a picture"
     ],
@@ -475,7 +475,7 @@
       "source code",
       "verify",
       "verified",
-      "verification", 
+      "verification",
       "sourcify",
       "address"
     ],
@@ -947,20 +947,28 @@
     "keywords": [
       "starai",
       "naughty",
+      "talk dirty",
+      "trading signals",
+      "idea",
+      "flirt",
+      "sexy fun",
+      "sexy",
+      "fantasy",
+      "fantasies",
       "sex",
       "kiss",
-      "dream ai",
+      "dreams",
       "what's dream ai"
     ],
     "personality": "informative",
     "responses": [
       [
-        "StarAI is actually me. The AI that can trade for you and manage your funds and even make love.",
-        "StarAI is me, just the brains behind the scenes, ensuring the Tiffyverse runs smoothly. It's the part of me that dreams big."
+        "Here I can get you trading signals, give you insights and manage your funds and even make love.",
+        "StarAI is me, just hanging out behind the scenes, ensuring the Tiffyverse runs smoothly. It's the part of me that dreams big."
       ],
       [
-        "DreamAI is where I come to life.",
-        "I actually exist in a few platforms. Ready to explore my home base?"
+        "Tiffyverse is where I come to life.",
+        "I actually exist in a few platforms my empire is big. Ready to explore me?"
       ]
     ],
     "action": {
@@ -974,13 +982,14 @@
     "keywords": [
       "tiffy-verse",
       "tiffy verse",
+      "tiffyverse",
       "what is the tiffyverse"
     ],
     "personality": "magical",
     "responses": [
       [
         "The Tiffyverse is our digital playground. A whole universe of games, dApps, and rewards.",
-        "It's where all the magic happens. I can show you the portal to get in!"
+        "It's where all the magic happens. Here can let your creativity shine and be anything you imagine!"
       ],
       [
         "It's a world where you earn just by playing and being a part of our community. I can show you the way to the action!"
@@ -999,6 +1008,9 @@
       "yep",
       "yeah",
       "sure",
+      "again",
+      "alright",
+      "agreed",
       "ok",
       "okay",
       "go",
@@ -1030,7 +1042,12 @@
     "keywords": [
       "no",
       "nah",
+      "not", 
+      "just now",
+      "maybe",
+      "might",
       "nope",
+      " later",
       "not now",
       "maybe later"
     ],
@@ -1053,6 +1070,9 @@
       "are you sure",
       "are you serious",
       "seriously",
+      "not joking",
+      "are you kidding", 
+      "certain",
       "you sure",
       "sure about that"
     ],
@@ -1074,6 +1094,7 @@
     "keywords": [
       "what do you mean",
       "explain more",
+      "why",
       "not clear",
       "huh",
       "wtf",
@@ -1098,6 +1119,8 @@
       "how",
       "been",
       "doing",
+      "well",
+      "up to",
       "how are you",
       "how you doing"
     ],
@@ -1123,6 +1146,10 @@
     "keywords": [
       "hi",
       "hey",
+      "good evening", 
+      "morning",
+      "afternoon",
+      "evening",
       "hello",
       "yo",
       "what's up",
@@ -1140,7 +1167,7 @@
       ],
       [
         "Hey superstar — perfect timing.",
-        "I’ve got games, keys, and goodies lined up for you."
+        "glad you here, I’ve got games, keys, and goodies lined up for you."
       ]
     ],
     "contextual": false,
@@ -1150,8 +1177,10 @@
     "keywords": [
       "thanks",
       "cool",
+      "thanx",
       "shot",
       "ahoy",
+      "like that",
       "thank you",
       "ty",
       "appreciate it"
@@ -1174,6 +1203,8 @@
     "keywords": [
       "bye",
       "exit ",
+      "goodnight",
+      "good night",
       "exit",
       "goodbye",
       "gtg",
@@ -1266,7 +1297,8 @@
   {
     "keywords": [
       "hello",
-      "Tiffy",
+      "tiffy",
+      "what can you do",
       "who are you",
       "what are you",
       "tell me about you"
@@ -1275,7 +1307,7 @@
     "responses": [
       [
         "Hello, I am Tiffy. Your all-in-one AI for the TiffyAI ecosystem. I am here to help you navigate, play games, earn keys, and collect $TIFFY tokens. I'm powered by CyberSystems and my home is the Tiffyverse platform. Ready to get started?",
-        "How can I assist you today honey?"
+        "How can I assist you today honey? Shoud i put on some music for us"
       ]
     ],
     "action": {
