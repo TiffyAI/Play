@@ -178,74 +178,81 @@
   </div>
 </div>
 
-<a-assets>
-  <!-- Default background video -->
-  <video id="bgvideo" autoplay loop muted playsinline 
-         src="https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/zone.mp4"></video>
-</a-assets>
+  <a-scene>
+    <a-assets>
+      <video id="bgvideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/zone.mp4"></video>
+    </a-assets>
 
-<!-- Background sky (controlled dynamically) -->
-<a-sky id="background" color="#000"></a-sky>
+    <!-- Background video -->
+    <a-sky id="background" src="#bgvideo"></a-sky>
 
-<script>
-  /***********************
-   * Load default background
-   ***********************/
-  window.addEventListener("load", () => {
-    const video = document.getElementById("bgvideo");
-    const sky = document.getElementById("background");
-    if (video && sky) {
-      video.muted = true;
-      video.play().catch(err => console.warn("Autoplay blocked:", err));
-      sky.setAttribute("src", "#bgvideo");
+    <!-- Floating holographic welcome text -->
+    <a-entity text="value: Welcome to TiffyAI Portal; color: #00f0ff; align: center; width: 6;"
+              position="0 2.5 -3"
+              animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"></a-entity>
+
+    <!-- Pulsing glow light -->
+    <a-entity light="type: point; color: #00f0ff; intensity: 1.5; distance: 8"
+              position="0 1.6 0"
+              animation="property: light.intensity; from: 0.5; to: 2; dir: alternate; loop: true; dur: 2000"></a-entity>
+
+    <!-- Stars particle system -->
+    <a-entity particle-system="preset: dust; particleCount: 2000; size: 1; color: #00f0ff, #ffffff"></a-entity>
+
+    <!-- Camera -->
+    <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
+  </a-scene>
+
+  <!-- ✅ New fixed script -->
+  <script>
+    // Voice system
+    function populateVoices() {
+      const select = document.getElementById("voiceSelect");
+      if (!select) return;
+      select.innerHTML = "";
+      const voices = speechSynthesis.getVoices();
+      voices.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v.name;
+        opt.textContent = `${v.name} (${v.lang})`;
+        select.appendChild(opt);
+      });
     }
-  });
 
-  /***********************
-   * Background swap logic
-   * - zone.mp4 by default
-   * - keyword = video/image from knowledge.json
-   * - otherwise = AI image
-   ***********************/
-  function swapBackground(url) {
-    const video = document.getElementById("bgvideo");
-    const sky = document.getElementById("background");
+    window.speechSynthesis.onvoiceschanged = populateVoices;
+    window.addEventListener("load", populateVoices);
 
-    if (!sky) return;
+    // Background swap fix
+    function swapBackground(url) {
+      const video = document.getElementById("bgvideo");
+      const sky = document.getElementById("background");
 
-    if (url.endsWith(".mp4") || url.endsWith(".webm")) {
-      // 👉 Keyword background (video)
-      if (video) {
-        video.src = url;
-        try { video.load(); video.play(); } catch(e){}
-        sky.setAttribute("src", "#bgvideo");
+      if (!sky) {
+        console.error("No <a-sky id='background'> found.");
+        return;
       }
-    } else if (url.startsWith("blob:") || url.startsWith("http")) {
-      // 👉 AI generated image
-      sky.setAttribute("src", url);
-    } else {
-      console.warn("⚠️ Unknown background type:", url);
+
+      if (url.endsWith(".mp4") || url.endsWith(".webm")) {
+        if (video) {
+          video.src = url;
+          try { video.load(); video.play(); } catch(e){}
+          sky.setAttribute("src", "#bgvideo");
+        }
+      } else {
+        sky.setAttribute("src", url); // ✅ AI image replaces background
+      }
     }
-  }
-</script>
 
+    // Autoplay video fix
+    window.addEventListener("load", () => {
+      const vid = document.getElementById("bgvideo");
+      if (vid) {
+        vid.muted = true;
+        vid.play().catch(err => console.warn("Autoplay blocked:", err));
+      }
+    });
+  </script>
 
-  <!-- Floating holographic welcome text -->
-  <a-entity text="value: Welcome to TiffyAI Portal; color: #00f0ff; align: center; width: 6;"
-            position="0 2.5 -3"
-            animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"></a-entity>
-
-  <!-- Pulsing glow light -->
-  <a-entity light="type: point; color: #00f0ff; intensity: 1.5; distance: 8"
-            position="0 1.6 0"
-            animation="property: light.intensity; from: 0.5; to: 2; dir: alternate; loop: true; dur: 2000"></a-entity>
-
-  <!-- Stars particle system -->
-  <a-entity particle-system="preset: dust; particleCount: 2000; size: 1; color: #00f0ff, #ffffff"></a-entity>
-
-  <!-- Camera -->
-  <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
-</a-scene>
 <!-- Glass interface -->
 <div class="glass-panel" id="chatPanel" style="display:none;">
   <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
