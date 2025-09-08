@@ -1333,14 +1333,41 @@ async function sendMessage() {
  ***********************/
 function swapBackground(url) {
   const video = document.getElementById("bgvideo");
-  if (!video) return;
-  if (url.endsWith(".mp4") || url.endsWith(".webm")) {
-    video.src = url;
-    try { video.load(); video.play(); } catch(e){}
-    document.querySelector("#background").setAttribute("src", "#bgvideo");
-  } else {
-    document.querySelector("#background").setAttribute("src", url);
+  const backgroundElement = document.getElementById("background");
+
+  if (!backgroundElement) {
+    console.error("No element with ID 'background' found.");
+    return;
   }
+
+  // Check if the URL is for a video
+  if (url.endsWith(".mp4") || url.endsWith(".webm")) {
+    if (video) {
+      video.src = url;
+      try { video.load(); video.play(); } catch(e){}
+      // Assuming you want the video to be the background
+      backgroundElement.style.backgroundImage = 'none';
+      backgroundElement.style.background = 'black'; // Or some other fallback
+      video.style.display = 'block';
+    }
+  } else {
+    // This is the image case.
+    // Hide the video element if it exists
+    if (video) {
+      video.pause();
+      video.style.display = 'none';
+    }
+
+    // Set the background image using CSS
+    backgroundElement.style.backgroundImage = `url(${url})`;
+    backgroundElement.style.backgroundSize = "cover";
+    backgroundElement.style.backgroundPosition = "center";
+    backgroundElement.style.backgroundRepeat = "no-repeat";
+  }
+
+  // Also, consider revoking the object URL to free up memory
+  // This is good practice for managing browser resources
+  // URL.revokeObjectURL(url); // You can call this after the image is loaded
 }
 
 /***********************
