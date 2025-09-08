@@ -187,6 +187,49 @@
 <!-- Background sky (controlled dynamically) -->
 <a-sky id="background" color="#000"></a-sky>
 
+<script>
+  /***********************
+   * Load default background
+   ***********************/
+  window.addEventListener("load", () => {
+    const video = document.getElementById("bgvideo");
+    const sky = document.getElementById("background");
+    if (video && sky) {
+      video.muted = true;
+      video.play().catch(err => console.warn("Autoplay blocked:", err));
+      sky.setAttribute("src", "#bgvideo");
+    }
+  });
+
+  /***********************
+   * Background swap logic
+   * - zone.mp4 by default
+   * - keyword = video/image from knowledge.json
+   * - otherwise = AI image
+   ***********************/
+  function swapBackground(url) {
+    const video = document.getElementById("bgvideo");
+    const sky = document.getElementById("background");
+
+    if (!sky) return;
+
+    if (url.endsWith(".mp4") || url.endsWith(".webm")) {
+      // 👉 Keyword background (video)
+      if (video) {
+        video.src = url;
+        try { video.load(); video.play(); } catch(e){}
+        sky.setAttribute("src", "#bgvideo");
+      }
+    } else if (url.startsWith("blob:") || url.startsWith("http")) {
+      // 👉 AI generated image
+      sky.setAttribute("src", url);
+    } else {
+      console.warn("⚠️ Unknown background type:", url);
+    }
+  }
+</script>
+
+
   <!-- Floating holographic welcome text -->
   <a-entity text="value: Welcome to TiffyAI Portal; color: #00f0ff; align: center; width: 6;"
             position="0 2.5 -3"
