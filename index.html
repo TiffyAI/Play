@@ -1348,25 +1348,21 @@ function swapBackground(url) {
     return;
   }
 
-  // Check if the URL is for a video
+  // Handle videos
   if (url.endsWith(".mp4") || url.endsWith(".webm")) {
     if (video) {
       video.src = url;
-      try { video.load(); video.play(); } catch(e){}
-      // Assuming the video is the background
-      backgroundElement.style.backgroundImage = 'none';
-      backgroundElement.style.background = 'black'; 
-      video.style.display = 'block';
+      try { video.load(); video.play(); } catch (e) {}
+      backgroundElement.style.backgroundImage = "none";
+      video.style.display = "block";
     }
   } else {
-    // This is the image case.
-    // Hide the video element if it exists
+    // ✅ Treat all other URLs (including blob:) as images
     if (video) {
       video.pause();
-      video.style.display = 'none';
+      video.style.display = "none";
     }
 
-    // Set the background image using CSS
     backgroundElement.style.backgroundImage = `url(${url})`;
     backgroundElement.style.backgroundSize = "cover";
     backgroundElement.style.backgroundPosition = "center";
