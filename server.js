@@ -1,73 +1,61 @@
-/***********************
- * Send message handler
- ***********************/
-async function sendMessage() {
-  const box = document.getElementById('messageBox');
-  const msg = (box.value || "").trim();
-  if (!msg) return;
-  box.value = "";
+import express from "express";
+import fetch from "node-fetch";
+import dotenv from "dotenv";
 
-  history.push({ role: userName || "user", text: msg });
-  saveMemory();
+dotenv.config();
 
-  let found = false;
-  const msgLow = msg.toLowerCase();
+const app = express();
+app.use(express.json());
 
-  // 🔹 Background keyword logic (keep as is)
-  for (const key in backgrounds) {
-    if (msgLow.includes(key)) {
-      const arr = backgrounds[key].responses || [backgrounds[key].response];
-      const reply = arr[Math.floor(Math.random() * arr.length)];
-      swapBackground(backgrounds[key].url);
-      speak(reply);
-      history.push({ role: "tiffy", text: reply });
-      saveMemory();
-      saveClaim(reply);
+// Health check
+app.get("/", (req, res) => {
+  res.send("✅ TiffyAI Image Engine is running");
+});
 
-      setContext({
-        lastTopic: key,
-        lastLinkHint: backgrounds[key].link || "",
-        lastAction: "background",
-        lastCommand: key
-      });
-
-      setTimeout(() => {
-        try { window.open(backgrounds[key].link, "_blank"); } catch (e) {}
-      }, 4000);
-      found = true;
-      break;
-    }
-  }
-  if (found) return;
-
-  // 🔹 Normal reply logic (keep as is)
-  const reply = smartReply(msg);
-  speak(reply);
-  history.push({ role: "tiffy", text: reply });
-  saveMemory();
-  saveClaim(reply);
-
-  // 🔹 EXTRA STEP: Generate Image for every message
+// Generate Image Endpoint
+app.post("/api/generate", async (req, res) => {
   try {
-    const resp = await fetch("/api/generate", {
+    const { prompt } = req.body;
+    if (!prompt) return res.status(400).json({ error: "Missing prompt" });
+
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "API key missing in server env" });
+
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`;
+
+    const payload = {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseModalities: ["TEXT", "IMAGE"] }
+    };
+
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: msg })
+      body: JSON.stringify(payload)
     });
 
-    if (resp.ok) {
-      const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
-
-      // Swap background live
-      swapBackground(url);
-
-      // Optional: Auto-open in new tab
-      // window.open(url, "_blank");
-    } else {
-      console.error("Image generation failed", await resp.text());
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Google API error: ${err}`);
     }
-  } catch (e) {
-    console.error("❌ Error generating image", e);
+
+    const result = await response.json();
+    const base64Data =
+      result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+
+    if (!base64Data) {
+      return res.status(500).json({ error: "No image returned from Google API" });
+    }
+
+    const imgBuffer = Buffer.from(base64Data, "base64");
+
+    res.set("Content-Type", "image/png");
+    res.send(imgBuffer);
+  } catch (err) {
+    console.error("❌ /api/generate error", err);
+    res.status(500).json({ error: err.message || "Image generation failed" });
   }
-}
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
