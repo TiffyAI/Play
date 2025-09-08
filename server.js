@@ -13,7 +13,7 @@ app.get("/", (req, res) => {
 });
 
 // Generate Image Endpoint
-app.post("https://world-engine-7x75.onrender.com/api/generate", async (req, res) => {
+app.post("/api/generate", async (req, res) => {
   try {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).json({ error: "Missing prompt" });
