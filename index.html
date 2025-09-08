@@ -246,58 +246,6 @@
   <!-- Camera -->
   <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
 </a-scene>
-
-<script>
-  // ✅ Voice system
-  function populateVoices() {
-    const select = document.getElementById("voiceSelect");
-    if (!select) return;
-    select.innerHTML = "";
-    const voices = speechSynthesis.getVoices();
-    voices.forEach(v => {
-      const opt = document.createElement("option");
-      opt.value = v.name;
-      opt.textContent = `${v.name} (${v.lang})`;
-      select.appendChild(opt);
-    });
-  }
-
-  window.speechSynthesis.onvoiceschanged = populateVoices;
-  window.addEventListener("load", populateVoices);
-
-  // ✅ Background swap fix
-  function swapBackground(url) {
-    const video = document.getElementById("bgvideo");
-    const sky = document.getElementById("background");
-
-    if (!sky) {
-      console.error("No <a-sky id='background'> found.");
-      return;
-    }
-
-    // If it's video
-    if (url.endsWith(".mp4") || url.endsWith(".webm")) {
-      if (video) {
-        video.src = url;
-        try { video.load(); video.play(); } catch(e){}
-        sky.setAttribute("src", "#bgvideo");
-      }
-    } else {
-      // Otherwise it's an image
-      sky.setAttribute("src", url);
-    }
-  }
-
-  // ✅ Autoplay video fix
-  window.addEventListener("load", () => {
-    const vid = document.getElementById("bgvideo");
-    if (vid) {
-      vid.muted = true;
-      vid.play().catch(err => console.warn("Autoplay blocked:", err));
-    }
-  });
-</script>
-
 <!-- Glass interface -->
 <div class="glass-panel" id="chatPanel" style="display:none;">
   <input type="text" id="messageBox" placeholder="Talk to TiffyAI..." />
