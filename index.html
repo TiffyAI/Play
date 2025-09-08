@@ -1364,14 +1364,26 @@ function swapBackground(url) {
     return;
   }
 
+  // Check if the URL is for a video
   if (url.endsWith(".mp4") || url.endsWith(".webm")) {
     if (video) {
+      // Pause and hide the video
+      video.pause();
+      video.style.display = 'none';
+
       video.src = url;
       try { video.load(); video.play(); } catch(e){}
+      // Point the sky to the new video
       sky.setAttribute("src", "#bgvideo");
     }
   } else {
-    // This is the image case, which now receives a Base64 data URL
+    // This is the image case.
+    if (video) {
+      // Explicitly pause and hide the video so it doesn't interfere
+      video.pause();
+      video.style.display = 'none';
+    }
+    // Set the A-Frame sky source to the new data URL
     sky.setAttribute("src", url);
   }
 }
