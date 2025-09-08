@@ -1356,14 +1356,13 @@ async function sendMessage() {
 function swapBackground(url) {
   const video = document.getElementById("bgvideo");
   const sky = document.getElementById("background");
-  const assets = document.querySelector('a-assets');
 
-  if (!sky || !assets) {
-    console.error("Missing A-Frame elements: a-sky or a-assets.");
+  if (!sky) {
+    console.error("No <a-sky id='background'> found.");
     return;
   }
 
-  // Check if the URL is a video or a dynamic image (data URL)
+  // Check if the URL is a video or a dynamic image
   if (url.startsWith('http') && (url.endsWith(".mp4") || url.endsWith(".webm"))) {
     // Handling a video URL
     if (video) {
@@ -1380,23 +1379,8 @@ function swapBackground(url) {
       video.style.display = 'none';
     }
 
-    // 1. Create a unique ID for the new image asset
-    const newImageId = 'generated-image-' + Date.now();
-    
-    // 2. Create a new <img> tag within <a-assets>
-    let img = document.getElementById(newImageId);
-    if (!img) {
-      img = document.createElement('img');
-      img.setAttribute('id', newImageId);
-      img.setAttribute('crossorigin', 'anonymous');
-      assets.appendChild(img);
-    }
-    
-    // 3. Set the image source to the data URL
-    img.setAttribute('src', url);
-
-    // 4. Update the a-sky src to point to the new asset
-    sky.setAttribute("src", '#' + newImageId);
+    // This is the definitive fix: directly update the material
+    sky.setAttribute('material', 'src', url);
   }
 }
 
