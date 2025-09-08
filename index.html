@@ -222,27 +222,6 @@
     window.speechSynthesis.onvoiceschanged = populateVoices;
     window.addEventListener("load", populateVoices);
 
-    // Background swap fix
-    function swapBackground(url) {
-      const video = document.getElementById("bgvideo");
-      const sky = document.getElementById("background");
-
-      if (!sky) {
-        console.error("No <a-sky id='background'> found.");
-        return;
-      }
-
-      if (url.endsWith(".mp4") || url.endsWith(".webm")) {
-        if (video) {
-          video.src = url;
-          try { video.load(); video.play(); } catch(e){}
-          sky.setAttribute("src", "#bgvideo");
-        }
-      } else {
-        sky.setAttribute("src", url); // ✅ AI image replaces background
-      }
-    }
-
     // Autoplay video fix
     window.addEventListener("load", () => {
       const vid = document.getElementById("bgvideo");
@@ -1354,22 +1333,17 @@ async function sendMessage() {
     });
 
     if (resp.ok) {
-      // Debugging: Show the response status and headers
-      console.log("Server response status:", resp.status);
-      console.log("Server response headers:", [...resp.headers.entries()]);
-
       const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
       
-      // Debugging: Show the created URL
-      console.log("Image URL created:", url);
-      console.log("Attempting to swap background with URL:", url);
+      // The fix: Create a Base64-encoded data URL from the blob
+      const reader = new FileReader();
+      reader.onloadend = function() {
+        const dataUrl = reader.result;
+        // Swap background live with the new data URL
+        swapBackground(dataUrl);
+      };
+      reader.readAsDataURL(blob);
 
-      // Swap background live
-      swapBackground(url);
-
-      // Optional: Auto-open in new tab
-      // window.open(url, "_blank");
     } else {
       console.error("Image generation failed", await resp.text());
     }
@@ -1378,7 +1352,9 @@ async function sendMessage() {
   }
 }
 
-// Background swap fix
+/***********************
+ * Background swap
+ ***********************/
 function swapBackground(url) {
   const video = document.getElementById("bgvideo");
   const sky = document.getElementById("background");
@@ -1388,7 +1364,6 @@ function swapBackground(url) {
     return;
   }
 
-  // 🎥 If it's a video (only for keyword commands)
   if (url.endsWith(".mp4") || url.endsWith(".webm")) {
     if (video) {
       video.src = url;
@@ -1396,17 +1371,10 @@ function swapBackground(url) {
       sky.setAttribute("src", "#bgvideo");
     }
   } else {
-    // 🖼️ AI-generated image takes priority after first run
+    // This is the image case, which now receives a Base64 data URL
     sky.setAttribute("src", url);
-
-    // Stop video completely after swap
-    if (video) {
-      try { video.pause(); } catch(e){}
-      video.removeAttribute("src"); // free memory
-    }
   }
 }
-
 /***********************
  * Microphone STT
  ***********************/
