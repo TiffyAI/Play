@@ -66,7 +66,10 @@ app.get("/test", async (req, res) => {
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`;
     const payload = {
-      contents: [{ parts: [{ text: prompt }] }]
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+       responseModalities: ["TEXT", "IMAGE"]
+      }
     };
 
     const response = await fetch(apiUrl, {
