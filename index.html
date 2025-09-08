@@ -1379,37 +1379,32 @@ async function sendMessage() {
   }
 }
 
-/***********************
- * Background swap
- ***********************/
+// Background swap fix
 function swapBackground(url) {
   const video = document.getElementById("bgvideo");
-  const backgroundElement = document.getElementById("background");
+  const sky = document.getElementById("background");
 
-  if (!backgroundElement) {
-    console.error("No element with ID 'background' found.");
+  if (!sky) {
+    console.error("No <a-sky id='background'> found.");
     return;
   }
 
-  // Handle videos
+  // 🎥 If it's a video (only for keyword commands)
   if (url.endsWith(".mp4") || url.endsWith(".webm")) {
     if (video) {
       video.src = url;
-      try { video.load(); video.play(); } catch (e) {}
-      backgroundElement.style.backgroundImage = "none";
-      video.style.display = "block";
+      try { video.load(); video.play(); } catch(e){}
+      sky.setAttribute("src", "#bgvideo");
     }
   } else {
-    // ✅ Treat all other URLs (including blob:) as images
-    if (video) {
-      video.pause();
-      video.style.display = "none";
-    }
+    // 🖼️ AI-generated image takes priority after first run
+    sky.setAttribute("src", url);
 
-    backgroundElement.style.backgroundImage = `url(${url})`;
-    backgroundElement.style.backgroundSize = "cover";
-    backgroundElement.style.backgroundPosition = "center";
-    backgroundElement.style.backgroundRepeat = "no-repeat";
+    // Stop video completely after swap
+    if (video) {
+      try { video.pause(); } catch(e){}
+      video.removeAttribute("src"); // free memory
+    }
   }
 }
 
