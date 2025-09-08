@@ -1312,8 +1312,16 @@ async function sendMessage() {
     });
 
     if (resp.ok) {
+      // Debugging: Show the response status and headers
+      console.log("Server response status:", resp.status);
+      console.log("Server response headers:", [...resp.headers.entries()]);
+
       const blob = await resp.blob();
       const url = URL.createObjectURL(blob);
+      
+      // Debugging: Show the created URL
+      console.log("Image URL created:", url);
+      console.log("Attempting to swap background with URL:", url);
 
       // Swap background live
       swapBackground(url);
@@ -1345,9 +1353,9 @@ function swapBackground(url) {
     if (video) {
       video.src = url;
       try { video.load(); video.play(); } catch(e){}
-      // Assuming you want the video to be the background
+      // Assuming the video is the background
       backgroundElement.style.backgroundImage = 'none';
-      backgroundElement.style.background = 'black'; // Or some other fallback
+      backgroundElement.style.background = 'black'; 
       video.style.display = 'block';
     }
   } else {
@@ -1364,10 +1372,6 @@ function swapBackground(url) {
     backgroundElement.style.backgroundPosition = "center";
     backgroundElement.style.backgroundRepeat = "no-repeat";
   }
-
-  // Also, consider revoking the object URL to free up memory
-  // This is good practice for managing browser resources
-  // URL.revokeObjectURL(url); // You can call this after the image is loaded
 }
 
 /***********************
