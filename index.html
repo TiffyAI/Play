@@ -178,13 +178,14 @@
   </div>
 </div>
 
-<a-scene>
-  <a-assets>
-    <video id="bgvideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/zone.mp4"></video>
-  </a-assets>
+<a-assets>
+  <!-- Default background video -->
+  <video id="bgvideo" autoplay loop muted playsinline 
+         src="https://raw.githubusercontent.com/TiffyAI/Play/refs/heads/main/zone.mp4"></video>
+</a-assets>
 
-  <!-- Background video -->
-  <a-sky id="background" src="#bgvideo"></a-sky>
+<!-- Background sky (controlled dynamically) -->
+<a-sky id="background" color="#000"></a-sky>
 
   <!-- Floating holographic welcome text -->
   <a-entity text="value: Welcome to TiffyAI Portal; color: #00f0ff; align: center; width: 6;"
