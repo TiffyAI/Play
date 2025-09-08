@@ -25,7 +25,7 @@ app.post("/api/generate", async (req, res) => {
 
     const payload = {
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { responseModalities: ["TEXT", "IMAGE"] }
+      generationConfig: { responseModalities: ["IMAGE"] }
     };
 
     const response = await fetch(apiUrl, {
@@ -34,16 +34,14 @@ app.post("/api/generate", async (req, res) => {
       body: JSON.stringify(payload)
     });
 
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Google API error: ${err}`);
-    }
-
     const result = await response.json();
+
+    // 🔍 Grab the base64 image data
     const base64Data =
-      result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+      result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
     if (!base64Data) {
+      console.error("❌ Unexpected Google response", JSON.stringify(result, null, 2));
       return res.status(500).json({ error: "No image returned from Google API" });
     }
 
