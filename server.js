@@ -9,14 +9,18 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// Serve saved images as static files
-app.use("/images", express.static(path.join(process.cwd(), "images")));
+// 📂 Public folder for generated images
+const __dirname = path.resolve();
+const imagesDir = path.join(__dirname, "public", "images");
+fs.mkdirSync(imagesDir, { recursive: true });
+app.use("/images", express.static(imagesDir));
 
-// Ensure images/ exists
-const imagesDir = path.join(process.cwd(), "images");
-if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir);
+// ✅ Health check
+app.get("/", (req, res) => {
+  res.send("✅ TiffyAI Image Engine is running");
+});
 
-// Generate Image Endpoint
+// 🖼️ Generate Image Endpoint
 app.post("/api/generate", async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -50,20 +54,39 @@ app.post("/api/generate", async (req, res) => {
       return res.status(500).json({ error: "No image returned from Google API" });
     }
 
-    // Save image to disk
-    const imgBuffer = Buffer.from(base64Data, "base64");
-    const filename = `img_${Date.now()}.png`;
+    // 📂 Save image to /public/images
+    const filename = prompt.replace(/\s+/g, "_").toLowerCase() + "_" + Date.now() + ".png";
     const filepath = path.join(imagesDir, filename);
-    fs.writeFileSync(filepath, imgBuffer);
+    fs.writeFileSync(filepath, Buffer.from(base64Data, "base64"));
 
-    // Return the public URL
-    const imageUrl = `/images/${filename}`;
-    res.json({ url: imageUrl });
-
+    // Send back relative URL
+    res.json({ url: "/images/" + filename });
   } catch (err) {
     console.error("❌ /api/generate error", err);
     res.status(500).json({ error: err.message || "Image generation failed" });
   }
+});
+
+// 📸 Simple Gallery Page
+app.get("/gallery", (req, res) => {
+  fs.readdir(imagesDir, (err, files) => {
+    if (err) return res.status(500).send("Could not list images");
+
+    const list = files
+      .filter(f => f.endsWith(".png"))
+      .map(f => `<div style="margin:10px;"><img src="/images/${f}" style="max-width:300px; display:block;"><p>${f}</p></div>`)
+      .join("");
+
+    res.send(`
+      <html>
+        <head><title>TiffyAI Gallery</title></head>
+        <body style="background:#111; color:#fff; font-family:sans-serif;">
+          <h1>TiffyAI Generated Images</h1>
+          <div style="display:flex; flex-wrap:wrap;">${list}</div>
+        </body>
+      </html>
+    `);
+  });
 });
 
 const PORT = process.env.PORT || 3000;
