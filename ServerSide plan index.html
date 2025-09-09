@@ -1372,33 +1372,40 @@ AFRAME.registerComponent('dynamic-sky-material', {
 function swapBackground(url) {
   const video = document.getElementById("bgvideo");
   const sky = document.getElementById("background");
+  const assets = document.querySelector("a-assets");
 
   if (!sky) {
     console.error("No <a-sky id='background'> found.");
     return;
   }
 
-  // Check if the URL is a video or a dynamic image
   if (url.startsWith('http') && (url.endsWith(".mp4") || url.endsWith(".webm"))) {
-    // Handling a video URL
+    // 🎥 Keyword video background
     if (video) {
-      video.pause();
-      video.style.display = 'none';
       video.src = url;
       try { video.load(); video.play(); } catch(e){}
       sky.setAttribute("src", "#bgvideo");
-      sky.removeAttribute('dynamic-sky-material'); // Remove the dynamic component
     }
   } else {
-    // This is the image case, which receives a Base64 data URL
+    // 🖼️ AI Image background
     if (video) {
       video.pause();
-      video.style.display = 'none';
     }
 
-    // Set the new data URL on our custom component
-    sky.setAttribute('dynamic-sky-material', 'src', url);
-    
+    // Remove old AI image if exists
+    let oldImg = document.getElementById("ai-img");
+    if (oldImg) oldImg.remove();
+
+    // Create new <img> in assets
+    const img = document.createElement("img");
+    img.id = "ai-img";
+    img.crossOrigin = "anonymous"; // prevent texture issues
+    img.src = url;
+
+    assets.appendChild(img);
+
+    // Point sky to it
+    sky.setAttribute("src", "#ai-img");
   }
 }
 /***********************
