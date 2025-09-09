@@ -1,18 +1,22 @@
 import express from "express";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
-// Health check
-app.get("/", (req, res) => {
-  res.send("✅ TiffyAI World Engine is running");
-});
+// Serve saved images as static files
+app.use("/images", express.static(path.join(process.cwd(), "images")));
 
-// Generate Image Endpoint (used by your message handler)
+// Ensure images/ exists
+const imagesDir = path.join(process.cwd(), "images");
+if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir);
+
+// Generate Image Endpoint
 app.post("/api/generate", async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -22,6 +26,7 @@ app.post("/api/generate", async (req, res) => {
     if (!apiKey) return res.status(500).json({ error: "API key missing in server env" });
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`;
+
     const payload = {
       contents: [{ parts: [{ text: prompt }] }]
     };
@@ -38,50 +43,26 @@ app.post("/api/generate", async (req, res) => {
     }
 
     const result = await response.json();
-
-    // Try to find inlineData (base64 image)
     const base64Data =
       result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
 
     if (!base64Data) {
-      console.error("⚠️ No image returned:", JSON.stringify(result, null, 2));
-      return res.status(500).json({ error: "No image returned from Google API", raw: result });
+      return res.status(500).json({ error: "No image returned from Google API" });
     }
 
+    // Save image to disk
     const imgBuffer = Buffer.from(base64Data, "base64");
+    const filename = `img_${Date.now()}.png`;
+    const filepath = path.join(imagesDir, filename);
+    fs.writeFileSync(filepath, imgBuffer);
 
-    res.set("Content-Type", "image/png");
-    res.send(imgBuffer);
+    // Return the public URL
+    const imageUrl = `/images/${filename}`;
+    res.json({ url: imageUrl });
+
   } catch (err) {
     console.error("❌ /api/generate error", err);
     res.status(500).json({ error: err.message || "Image generation failed" });
-  }
-});
-
-// 🔹 Temporary debug test route
-app.get("/test", async (req, res) => {
-  try {
-    const prompt = "A glowing neon dragon in glass armor, cyberpunk city at night";
-    const apiKey = process.env.GOOGLE_API_KEY;
-
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`;
-    const payload = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-       responseModalities: ["TEXT", "IMAGE"]
-      }
-    };
-
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await response.json();
-    res.json(result); // 👈 Dump raw JSON so you can inspect
-  } catch (e) {
-    res.status(500).json({ error: e.message });
   }
 });
 
