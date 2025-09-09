@@ -1349,7 +1349,6 @@ async function sendMessage() {
     console.error("❌ Error generating image", e);
   }
 }
-
 /***********************
  * Background swap
  ***********************/
@@ -1362,7 +1361,7 @@ function swapBackground(url) {
     return;
   }
 
-  // Check if the URL is a video or a dynamic image
+  // Check if the URL is a video or a dynamic image (data URL)
   if (url.startsWith('http') && (url.endsWith(".mp4") || url.endsWith(".webm"))) {
     // Handling a video URL
     if (video) {
@@ -1379,11 +1378,10 @@ function swapBackground(url) {
       video.style.display = 'none';
     }
 
-    // This is the definitive fix: directly update the material
-    sky.setAttribute('material', 'src', url);
+    // This is the final, most explicit fix: directly update the material
+    sky.components.material.set('src', url);
   }
 }
-
 /***********************
  * Microphone STT
  ***********************/
