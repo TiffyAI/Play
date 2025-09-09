@@ -184,7 +184,7 @@
     </a-assets>
 
     <!-- Background video -->
-    <a-sky id="background" src="#bgvideo"></a-sky>
+    <a-sky id="background" src="#bgvideo" dynamic-sky-material></a-sky>
 
     <!-- Floating holographic welcome text -->
     <a-entity text="value: Welcome to TiffyAI Portal; color: #00f0ff; align: center; width: 6;"
@@ -1349,6 +1349,23 @@ async function sendMessage() {
     console.error("❌ Error generating image", e);
   }
 }
+// This is a new A-Frame component to handle the image texture
+AFRAME.registerComponent('dynamic-sky-material', {
+  schema: {
+    src: {type: 'string', default: ''}
+  },
+  multiple: false,
+  init: function () {
+    this.el.setAttribute('material', 'shader', 'flat');
+    this.el.setAttribute('material', 'src', this.data.src);
+  },
+  update: function (oldData) {
+    if (this.data.src && this.data.src !== oldData.src) {
+      this.el.setAttribute('material', 'src', this.data.src);
+    }
+  }
+});
+
 /***********************
  * Background swap
  ***********************/
@@ -1361,7 +1378,7 @@ function swapBackground(url) {
     return;
   }
 
-  // Check if the URL is a video or a dynamic image (data URL)
+  // Check if the URL is a video or a dynamic image
   if (url.startsWith('http') && (url.endsWith(".mp4") || url.endsWith(".webm"))) {
     // Handling a video URL
     if (video) {
@@ -1370,6 +1387,7 @@ function swapBackground(url) {
       video.src = url;
       try { video.load(); video.play(); } catch(e){}
       sky.setAttribute("src", "#bgvideo");
+      sky.removeAttribute('dynamic-sky-material'); // Remove the dynamic component
     }
   } else {
     // This is the image case, which receives a Base64 data URL
@@ -1378,8 +1396,9 @@ function swapBackground(url) {
       video.style.display = 'none';
     }
 
-    // This is the final, most explicit fix: directly update the material
-    sky.components.material.set('src', url);
+    // Set the new data URL on our custom component
+    sky.setAttribute('dynamic-sky-material', 'src', url);
+    
   }
 }
 /***********************
