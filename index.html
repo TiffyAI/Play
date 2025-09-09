@@ -1276,79 +1276,118 @@ function smartReply(userMsg) {
 }
 
 /***********************
- * Send message handler
+ * Send message handler (FULL - drop-in replacement)
  ***********************/
 async function sendMessage() {
-  const box = document.getElementById('messageBox');
-  const msg = (box.value || "").trim();
-  if (!msg) return;
-  box.value = "";
+  try {
+    const box = document.getElementById('messageBox');
+    const msg = (box && (box.value || "").trim()) || "";
+    if (!msg) return;
+    // clear input right away
+    if (box) box.value = "";
 
-  history.push({ role: userName || "user", text: msg });
-  saveMemory();
-
-  let found = false;
-  const msgLow = msg.toLowerCase();
-
-  // 🔹 Background keyword logic (keep as is)
-  for (const key in backgrounds) {
-    if (msgLow.includes(key)) {
-      const arr = backgrounds[key].responses || [backgrounds[key].response];
-      const reply = arr[Math.floor(Math.random() * arr.length)];
-      swapBackground(backgrounds[key].url);
-      speak(reply);
-      history.push({ role: "tiffy", text: reply });
-      saveMemory();
-      saveClaim(reply);
-
-      setContext({
-        lastTopic: key,
-        lastLinkHint: backgrounds[key].link || "",
-        lastAction: "background",
-        lastCommand: key
-      });
-
-      setTimeout(() => {
-        try { window.open(backgrounds[key].link, "_blank"); } catch (e) {}
-      }, 4000);
-      found = true;
-      break;
+    // ensure history array exists
+    if (!window.history || !Array.isArray(window.history)) {
+      window.history = [];
     }
+
+    // push user message + persist
+    history.push({ role: userName || "user", text: msg, ts: Date.now() });
+    if (typeof saveMemory === "function") {
+      try { saveMemory(); } catch (e) { console.warn("saveMemory() failed:", e); }
+    }
+
+    let found = false;
+    const msgLow = msg.toLowerCase();
+
+    // ---------- Background keyword logic (unchanged flow) ----------
+    if (typeof backgrounds === "object" && backgrounds !== null) {
+      for (const key in backgrounds) {
+        try {
+          if (Object.prototype.hasOwnProperty.call(backgrounds, key) && msgLow.includes(key)) {
+            const arr = backgrounds[key].responses || [backgrounds[key].response];
+            const reply = arr[Math.floor(Math.random() * arr.length)] || "";
+            // swap to the pre-defined background (may be video or image url)
+            try { swapBackground(backgrounds[key].url); } catch (e) { console.warn("swapBackground() error:", e); }
+
+            // reply + voice
+            try { speak(reply); } catch (e) { console.warn("speak() error:", e); }
+
+            history.push({ role: "tiffy", text: reply, ts: Date.now() });
+            if (typeof saveMemory === "function") { try { saveMemory(); } catch (e) {} }
+            if (typeof saveClaim === "function") { try { saveClaim(reply); } catch (e) {} }
+
+            try {
+              setContext({
+                lastTopic: key,
+                lastLinkHint: backgrounds[key].link || "",
+                lastAction: "background",
+                lastCommand: key
+              });
+            } catch (e) {}
+
+            // open link if present (preserve original behavior)
+            if (backgrounds[key].link) {
+              setTimeout(() => { try { window.open(backgrounds[key].link, "_blank"); } catch (e) {} }, 4000);
+            }
+
+            found = true;
+            break;
+          }
+        } catch (e) { console.warn("backgrounds loop error:", e); }
+      } // end for
+    } // end backgrounds check
+
+    if (found) return; // keep original behavior
+
+    // ---------- Default smart reply (unchanged flow) ----------
+    let reply = "";
+    try { reply = smartReply(msg) || ""; } catch (e) { console.warn("smartReply() failed:", e); }
+    try { speak(reply); } catch (e) { console.warn("speak() failed:", e); }
+    history.push({ role: "tiffy", text: reply, ts: Date.now() });
+    if (typeof saveMemory === "function") { try { saveMemory(); } catch (e) {} }
+    if (typeof saveClaim === "function") { try { saveClaim(reply); } catch (e) {} }
+
+    // ---------- EXTRA STEP: Generate Image for every message ----------
+    // This runs after the text reply so UI flow is preserved.
+    (async () => {
+      try {
+        const resp = await fetch("https://world-engine-7x75.onrender.com/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: msg })
+        });
+
+        if (!resp.ok) {
+          const txt = await resp.text().catch(()=>"(no body)");
+          console.error("Image generation failed:", resp.status, txt);
+          return;
+        }
+
+        // expects server to respond { url: "/images/filename.png" }
+        const json = await resp.json().catch(()=>null);
+        const imageUrl = json && json.url ? ("https://world-engine-7x75.onrender.com" + json.url) : null;
+
+        if (!imageUrl) {
+          console.error("Image generation returned no URL:", json);
+          return;
+        }
+
+        console.log("✅ AI image ready at:", imageUrl);
+        // swap background to that public URL (A-Frame prefers full http URLs)
+        try { swapBackground(imageUrl); } catch (e) { console.warn("swapBackground() error:", e); }
+
+        // debug helper - open in new tab so you can confirm
+        try { window.open(imageUrl, "_blank"); } catch(e){}
+
+      } catch (err) {
+        console.error("❌ Error generating image", err);
+      }
+    })();
+
+  } catch (err) {
+    console.error("sendMessage() fatal error:", err);
   }
-  if (found) return;
-
-  // 🔹 Normal reply logic (keep as is)
-  const reply = smartReply(msg);
-  speak(reply);
-  history.push({ role: "tiffy", text: reply });
-  saveMemory();
-  saveClaim(reply);
-
-  // 🔹 EXTRA STEP: Generate Image for every message
-try {
-  const resp = await fetch("https://world-engine-7x75.onrender.com/api/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt: msg })
-  });
-
-  if (resp.ok) {
-    const data = await resp.json();
-    const imageUrl = "https://world-engine-7x75.onrender.com" + data.url;
-
-    console.log("✅ AI image ready at:", imageUrl);
-
-    // Swap background in A-Frame
-    swapBackground(imageUrl);
-
-    // Debug: also open image in a new tab so you can SEE it
-    window.open(imageUrl, "_blank");
-
-  } else {
-    console.error("Image generation failed", await resp.text());
-  }
-} catch (e) {
-  console.error("❌ Error generating image", e);
 }
 
 /***********************
