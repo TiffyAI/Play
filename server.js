@@ -1,93 +1,68 @@
 import express from "express";
 import fetch from "node-fetch";
-import dotenv from "dotenv";
-import fs from "fs";
-import path from "path";
-
-dotenv.config();
+import cors from "cors";
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
-// 📂 Public folder for generated images
-const __dirname = path.resolve();
-const imagesDir = path.join(__dirname, "public", "images");
-fs.mkdirSync(imagesDir, { recursive: true });
-app.use("/images", express.static(imagesDir));
+const PORT = process.env.PORT || 8080;
+const EDEN_API_KEY = process.env.EDEN_API_KEY;
 
-// ✅ Health check
-app.get("/", (req, res) => {
-  res.send("✅ TiffyAI Image Engine is running");
-});
+if (!EDEN_API_KEY) {
+  console.error("❌ Missing EDEN_API_KEY in environment");
+  process.exit(1);
+}
 
-// 🖼️ Generate Image Endpoint
+// Proxy endpoint for text & image generation
 app.post("/api/generate", async (req, res) => {
   try {
-    const { prompt } = req.body;
-    if (!prompt) return res.status(400).json({ error: "Missing prompt" });
+    const { type, prompt } = req.body;
 
-    const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "API key missing in server env" });
+    if (!type || !prompt) {
+      return res.status(400).json({ error: "Missing type or prompt" });
+    }
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`;
+    let url = "";
+    let body = {};
 
-    const payload = {
-      contents: [{ parts: [{ text: prompt }] }]
-    };
+    if (type === "text") {
+      url = "https://api.edenai.run/v2/text/generation";
+      body = {
+        providers: ["openai"], // you can switch to cohere, anthropic, etc.
+        text: prompt,
+        temperature: 0.7,
+        max_tokens: 150
+      };
+    } else if (type === "image") {
+      url = "https://api.edenai.run/v2/image/generation";
+      body = {
+        providers: ["openai"], // or "stabilityai" if you prefer
+        text: prompt,
+        resolution: "512x512"
+      };
+    } else {
+      return res.status(400).json({ error: "Invalid type" });
+    }
 
-    const response = await fetch(apiUrl, {
+    const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      headers: {
+        Authorization: `Bearer ${EDEN_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
     });
 
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Google API error: ${err}`);
-    }
+    const data = await response.json();
+    res.json(data);
 
-    const result = await response.json();
-    const base64Data =
-      result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-
-    if (!base64Data) {
-      return res.status(500).json({ error: "No image returned from Google API" });
-    }
-
-    // 📂 Save image to /public/images
-    const filename = prompt.replace(/\s+/g, "_").toLowerCase() + "_" + Date.now() + ".png";
-    const filepath = path.join(imagesDir, filename);
-    fs.writeFileSync(filepath, Buffer.from(base64Data, "base64"));
-
-    // Send back relative URL
-    res.json({ url: "/images/" + filename });
   } catch (err) {
-    console.error("❌ /api/generate error", err);
-    res.status(500).json({ error: err.message || "Image generation failed" });
+    console.error("⚠️ Error:", err);
+    res.status(500).json({ error: "Failed to generate" });
   }
 });
 
-// 📸 Simple Gallery Page
-app.get("/gallery", (req, res) => {
-  fs.readdir(imagesDir, (err, files) => {
-    if (err) return res.status(500).send("Could not list images");
-
-    const list = files
-      .filter(f => f.endsWith(".png"))
-      .map(f => `<div style="margin:10px;"><img src="/images/${f}" style="max-width:300px; display:block;"><p>${f}</p></div>`)
-      .join("");
-
-    res.send(`
-      <html>
-        <head><title>TiffyAI Gallery</title></head>
-        <body style="background:#111; color:#fff; font-family:sans-serif;">
-          <h1>TiffyAI Generated Images</h1>
-          <div style="display:flex; flex-wrap:wrap;">${list}</div>
-        </body>
-      </html>
-    `);
-  });
+app.listen(PORT, () => {
+  console.log(`🚀 TiffyAI World Engine listening on :${PORT}`);
 });
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
