@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TiffyAI World Engine 🌌</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: radial-gradient(circle at center, #0d0d0d, #000033);
+      color: #00ffe5;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      font-size: 2.5em;
+      color: #ff00ff;
+      text-shadow: 0 0 15px #ff00ff;
+    }
+    .glass {
+      background: rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 20px;
+      margin: auto;
+      max-width: 500px;
+      box-shadow: 0 0 20px rgba(0,255,255,0.4);
+    }
+    input, select, button {
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      margin: 10px;
+      font-size: 1em;
+    }
+    button {
+      background: #00ffe5;
+      color: #000;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #ff00ff;
+      color: #fff;
+      box-shadow: 0 0 15px #ff00ff;
+    }
+    #output img {
+      max-width: 100%;
+      border-radius: 15px;
+      margin-top: 15px;
+    }
+    #output {
+      margin-top: 20px;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚀 TiffyAI World Engine</h1>
+  <div class="glass">
+    <p>Type your cosmic prompt ✨</p>
+    <input type="text" id="prompt" placeholder="E.g. Neon cat on Mars...">
+    <select id="type">
+      <option value="text">📝 Text</option>
+      <option value="image">🎨 Image</option>
+    </select>
+    <button onclick="generate()">Generate</button>
+    <div id="output"></div>
+  </div>
+
+  <script>
+    async function generate() {
+      const prompt = document.getElementById("prompt").value;
+      const type = document.getElementById("type").value;
+      const output = document.getElementById("output");
+
+      output.innerHTML = "⏳ Generating...";
+
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, prompt })
+      });
+
+      const data = await res.json();
+      console.log("API response:", data);
+
+      if (type === "text") {
+        const text = data.openai?.generated_text || "⚠️ No text result.";
+        output.innerHTML = `<p>${text}</p>`;
+      } else if (type === "image") {
+        const image = data.openai?.items?.[0]?.image_resource_url;
+        if (image) {
+          output.innerHTML = `<img src="${image}" alt="Generated image">`;
+        } else {
+          output.innerHTML = "⚠️ No image result.";
+        }
+      }
+    }
+  </script>
+</body>
+</html>
