@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TiffyAI — Space NPC</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:#040418; font-family:Inter, sans-serif; color:#e6f6ff; }
+    .card { width:92%; max-width:920px; border-radius:18px; padding:22px; background:rgba(255,255,255,0.05); backdrop-filter:blur(12px); }
+    textarea { width:100%; height:90px; padding:12px; border-radius:10px; border:none; background:#0006; color:#dff; resize:vertical; }
+    .btn { padding:12px 20px; border-radius:999px; border:none; cursor:pointer; font-weight:700; background:linear-gradient(90deg,#00e0ff,#ff00ff); color:#001; }
+    .output { margin-top:16px; display:flex; flex-direction:column; gap:16px; }
+    .text { background:#0006; padding:12px; border-radius:10px; min-height:120px; white-space:pre-wrap; }
+    .image { position:relative; display:inline-block; }
+    .image img { width:100%; border-radius:12px; }
+    .character { position:absolute; bottom:0; left:50%; transform:translateX(-50%); max-width:50%; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>✨ TiffyAI — Cosmic Character (Text + Voice + Image)</h1>
+    <textarea id="prompt" placeholder="Ask Tiffy to describe and appear in scene..."></textarea>
+    <button id="generateBtn" class="btn">🚀 Generate</button>
+
+    <div class="output" id="output" style="display:none;">
+      <div id="textOut" class="text"></div>
+      <div class="image" id="imageOut"></div>
+    </div>
+  </div>
+
+  <script>
+    const btn = document.getElementById("generateBtn");
+    const promptEl = document.getElementById("prompt");
+    const textOut = document.getElementById("textOut");
+    const imageOut = document.getElementById("imageOut");
+    const output = document.getElementById("output");
+
+    async function generate() {
+      const prompt = promptEl.value.trim();
+      if (!prompt) return alert("Type something first!");
+
+      btn.disabled = true;
+      textOut.textContent = "Generating...";
+      imageOut.innerHTML = "";
+      output.style.display = "flex";
+
+      try {
+        const resp = await fetch("/api/generate-both", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt })
+        });
+        const data = await resp.json();
+
+        // Text
+        textOut.textContent = data.text || "No text response";
+        if (data.text) {
+          const speech = new SpeechSynthesisUtterance(data.text);
+          speech.lang = "en-US";
+          speech.rate = 1;
+          window.speechSynthesis.speak(speech);
+        }
+
+        // Image + character overlay
+        if (data.imageBase64 || data.imageUrl) {
+          const imgSrc = data.imageBase64 || data.imageUrl;
+          imageOut.innerHTML = `<img src="${imgSrc}" alt="scene" /> 
+                                <img class="character" src="${imgSrc}" alt="character" />`;
+        } else {
+          imageOut.textContent = "No image returned";
+        }
+      } catch (err) {
+        textOut.textContent = "Error: " + err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    btn.addEventListener("click", generate);
+    promptEl.addEventListener("keydown", e => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) generate();
+    });
+  </script>
+</body>
+</html>
