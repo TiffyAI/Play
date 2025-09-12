@@ -1,9 +1,9 @@
 // server.js
 'use strict';
 
-const express = require('express');
-const fetch = require('node-fetch');
-const bodyParser = require('body-parser');
+import express from "express";
+import fetch from "node-fetch";   // make sure this is in package.json
+import bodyParser from "body-parser";
 
 const app = express();
 const port = process.env.PORT || 10000;
@@ -11,25 +11,24 @@ const port = process.env.PORT || 10000;
 app.use(bodyParser.json());
 
 // Health check
-app.get('/', (req, res) => {
-  res.send('World Engine API is live ✅');
+app.get("/", (req, res) => {
+  res.send("🌍 World Engine API is live ✅");
 });
 
-// Image generate route
-app.post('/api/generate', async (req, res) => {
+// Image generation
+app.post("/api/generate", async (req, res) => {
   try {
     const { prompt } = req.body;
-
     if (!prompt) {
-      return res.status(400).json({ error: 'Missing prompt' });
+      return res.status(400).json({ error: "Missing prompt" });
     }
 
-    // Call your AI image API (replace with your actual endpoint)
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
+    // Call the Eden/AI (or OpenAI if that’s the key you pasted) endpoint
+    const response = await fetch("https://api.openai.com/v1/images/generations", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.API_KEY}`, // your env var
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.API_KEY}`, // env set in Render
       },
       body: JSON.stringify({
         model: "gpt-image-1",
@@ -44,14 +43,18 @@ app.post('/api/generate', async (req, res) => {
       return res.status(response.status).json(data);
     }
 
-    // OpenAI returns image URLs inside data.data[0].url
-    res.json({ url: data.data[0].url });
+    const imageUrl = data.data?.[0]?.url;
+    if (!imageUrl) {
+      return res.status(500).json({ error: "No image returned" });
+    }
+
+    res.json({ url: imageUrl });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Image error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 app.listen(port, () => {
-  console.log(`✅ Server running on port ${port}`);
+  console.log(`🚀 Server running on port ${port}`);
 });
