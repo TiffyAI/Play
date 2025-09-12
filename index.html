@@ -1,99 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>TiffyAI World Engine 🌌</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <title>World Engine</title>
   <style>
-    body {
-      font-family: 'Orbitron', sans-serif;
-      background: radial-gradient(circle at center, #0d0d0d, #000033);
-      color: #00ffe5;
-      text-align: center;
-      padding: 30px;
-    }
-    h1 {
-      font-size: 2.5em;
-      color: #ff00ff;
-      text-shadow: 0 0 15px #ff00ff;
-    }
+    body { font-family: Arial, sans-serif; background:#111; color:#eee; text-align:center; }
     .glass {
-      background: rgba(255,255,255,0.08);
-      border-radius: 20px;
-      padding: 20px;
-      margin: auto;
-      max-width: 500px;
-      box-shadow: 0 0 20px rgba(0,255,255,0.4);
+      margin: 40px auto; padding: 20px;
+      max-width: 500px; background: rgba(255,255,255,0.08);
+      border-radius: 12px; backdrop-filter: blur(12px);
     }
-    input, select, button {
-      padding: 10px;
-      border-radius: 10px;
-      border: none;
-      margin: 10px;
-      font-size: 1em;
-    }
-    button {
-      background: #00ffe5;
-      color: #000;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button:hover {
-      background: #ff00ff;
-      color: #fff;
-      box-shadow: 0 0 15px #ff00ff;
-    }
-    #output img {
-      max-width: 100%;
-      border-radius: 15px;
-      margin-top: 15px;
-    }
-    #output {
-      margin-top: 20px;
-      color: #fff;
+    img { max-width: 100%; border-radius: 12px; margin-top: 15px; }
+    a.download {
+      display: inline-block; margin-top: 10px; padding: 8px 14px;
+      background: #06f; color: #fff; text-decoration: none; border-radius: 8px;
     }
   </style>
 </head>
 <body>
-  <h1>🚀 TiffyAI World Engine</h1>
   <div class="glass">
-    <p>Type your cosmic prompt ✨</p>
-    <input type="text" id="prompt" placeholder="E.g. Neon cat on Mars...">
-    <select id="type">
-      <option value="text">📝 Text</option>
-      <option value="image">🎨 Image</option>
-    </select>
+    <h1>World Engine Generator</h1>
+    <input id="prompt" placeholder="Enter a prompt..." style="width:90%;padding:8px" />
     <button onclick="generate()">Generate</button>
+    <div id="status"></div>
     <div id="output"></div>
   </div>
 
   <script>
     async function generate() {
       const prompt = document.getElementById("prompt").value;
-      const type = document.getElementById("type").value;
+      const status = document.getElementById("status");
       const output = document.getElementById("output");
+      status.innerText = "Generating...";
+      output.innerHTML = "";
 
-      output.innerHTML = "⏳ Generating...";
+      try {
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt })
+        });
 
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, prompt })
-      });
+        const data = await res.json();
 
-      const data = await res.json();
-      console.log("API response:", data);
-
-      if (type === "text") {
-        const text = data.openai?.generated_text || "⚠️ No text result.";
-        output.innerHTML = `<p>${text}</p>`;
-      } else if (type === "image") {
-        const image = data.openai?.items?.[0]?.image_resource_url;
-        if (image) {
-          output.innerHTML = `<img src="${image}" alt="Generated image">`;
+        if (data.url) {
+          status.innerText = "✅ Done!";
+          output.innerHTML = `
+            <img src="${data.url}" alt="Generated image"/>
+            <a class="download" href="${data.url}" download="generated.png">Download</a>
+          `;
         } else {
-          output.innerHTML = "⚠️ No image result.";
+          status.innerText = "❌ Error: " + (data.error || "Unknown");
         }
+      } catch (e) {
+        status.innerText = "❌ Error: " + e.message;
       }
     }
   </script>
