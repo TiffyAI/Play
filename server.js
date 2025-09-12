@@ -1,68 +1,57 @@
-import express from "express";
-import fetch from "node-fetch";
-import cors from "cors";
+// server.js
+'use strict';
+
+const express = require('express');
+const fetch = require('node-fetch');
+const bodyParser = require('body-parser');
 
 const app = express();
-app.use(express.json());
-app.use(cors());
+const port = process.env.PORT || 10000;
 
-const PORT = process.env.PORT || 8080;
-const EDEN_API_KEY = process.env.EDEN_API_KEY;
+app.use(bodyParser.json());
 
-if (!EDEN_API_KEY) {
-  console.error("❌ Missing EDEN_API_KEY in environment");
-  process.exit(1);
-}
+// Health check
+app.get('/', (req, res) => {
+  res.send('World Engine API is live ✅');
+});
 
-// Proxy endpoint for text & image generation
-app.post("/api/generate", async (req, res) => {
+// Image generate route
+app.post('/api/generate', async (req, res) => {
   try {
-    const { type, prompt } = req.body;
+    const { prompt } = req.body;
 
-    if (!type || !prompt) {
-      return res.status(400).json({ error: "Missing type or prompt" });
+    if (!prompt) {
+      return res.status(400).json({ error: 'Missing prompt' });
     }
 
-    let url = "";
-    let body = {};
-
-    if (type === "text") {
-      url = "https://api.edenai.run/v2/text/generation";
-      body = {
-        providers: ["openai"], // you can switch to cohere, anthropic, etc.
-        text: prompt,
-        temperature: 0.7,
-        max_tokens: 150
-      };
-    } else if (type === "image") {
-      url = "https://api.edenai.run/v2/image/generation";
-      body = {
-        providers: ["openai"], // or "stabilityai" if you prefer
-        text: prompt,
-        resolution: "512x512"
-      };
-    } else {
-      return res.status(400).json({ error: "Invalid type" });
-    }
-
-    const response = await fetch(url, {
-      method: "POST",
+    // Call your AI image API (replace with your actual endpoint)
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
       headers: {
-        Authorization: `Bearer ${EDEN_API_KEY}`,
-        "Content-Type": "application/json"
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.API_KEY}`, // your env var
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        model: "gpt-image-1",
+        prompt,
+        size: "512x512"
+      }),
     });
 
     const data = await response.json();
-    res.json(data);
 
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+
+    // OpenAI returns image URLs inside data.data[0].url
+    res.json({ url: data.data[0].url });
   } catch (err) {
-    console.error("⚠️ Error:", err);
-    res.status(500).json({ error: "Failed to generate" });
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 TiffyAI World Engine listening on :${PORT}`);
+app.listen(port, () => {
+  console.log(`✅ Server running on port ${port}`);
 });
