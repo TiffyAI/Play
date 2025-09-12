@@ -48,7 +48,7 @@
       ],
       [
         "Got some TIFFY in your wallet now? Perfect. Remember, you can send 1 to a friend and we’ll send you 2 back instantly.",
-        "Check the **Main Menu** for your unique viral link."
+        "Check the top button on the Main Menu to get started"
       ]
     ],
     "action": {
@@ -72,11 +72,11 @@
     "responses": [
       [
         "Ready for a secret that's too good to keep quiet? We have a viral giveaway that’s about to blow up the Tiffyverse.",
-        "Want me to drop the details?"
+        "Want me to drop the details? Just say, double it"
       ],
       [
         "Feeling generous? How about sending 1 TIFFY and instantly getting 2 back?",
-        "That's right, it's a 1-for-2 instant return. I can show you how to start."
+        "That's right, it's a 1-for-2 instant return. If you ready to do it. Just say double it"
       ]
     ],
     "contextual": false,
@@ -86,6 +86,7 @@
     "keywords": [
       "share",
       "refer",
+      "double it",
       "viral",
       "get 2 back",
       "send tiffy",
@@ -95,12 +96,12 @@
     "personality": "playful",
     "responses": [
       [
-        "Alright, here's the magic trick. You send 1 TIFFY to a new friend's wallet, and we send you 2 TIFFY back, instantly!",
-        "This is the **Tiffy-verse Viral Loop** and you can find your unique link in the **Main Menu**."
+        "Alright, here's the magic trick. Get your friends BNB wallet address. You send 1 TIFFY to a new friend's wallet, and we send you 2 TIFFY back, instantly!",
+        "This is the Tiffy-verse Viral Loop, all you do is send 1 of your TIFFY tokens to a friend and we will instantly send 2 tokens back to you, you can start in the Main Menu. "
       ],
       [
         "It’s a win-win, really. Your friend gets a TIFFY, and you get double back. Just be sure you have at least 1 TIFFY to send after you withdraw.",
-        "I'll guide you to the **Main Menu** so you can grab your link and start sharing."
+        "I'll guide you to the top button on the Main Menu so you can send 1 TIFFY to your friends BNB wallet address, start sharing. Double your TIFFY tokens now"
       ]
     ],
     "action": {
@@ -238,9 +239,10 @@
   },
   {
     "keywords": [
-      "blue key",
+      " blue key",
       "gold key",
       "keys",
+      "blue",
       "treasure",
       "luck wheel",
       "hidden treasure",
@@ -249,7 +251,7 @@
     "personality": "informative",
     "responses": [
       [
-        "Daily claim: TIFFY tokens + 1 Blue Key.",
+        "Enable Notification in your browser. Daily claim: TIFFY tokens + 1 Blue Key.",
         "Collect 3 for the Luck Wheel, 5 to start Hidden Treasure hunts."
       ],
       [
@@ -366,7 +368,7 @@
     "personality": "excited",
     "responses": [
       [
-        "Stacking blocks… welcome to the Tetris world!",
+        "Stacking those rows… welcome to the Tetris world!",
         "Make those rows and flex that brain."
       ],
       [
@@ -646,7 +648,7 @@
     ],
     "action": {
       "type": "link",
-      "url": "https://www.tiffyai.co.za"
+      "url": "https://www.tiffyai.co.za/whitepaper"
     },
     "contextual": false,
     "memoryUsage": null
@@ -740,11 +742,11 @@
     "personality": "cheeky",
     "responses": [
       [
-        "Want me in your pocket 24/7? Hit the Telegram bot.",
-        "Careful — I can be addictive on StarAI, specially where i can be on my naughtiest."
+        "Want me in your pocket 24-7? Hit the Telegram bot.",
+        "Careful on Telegram — I can be addictive on StarAI, specially where i can be on my naughtiest actually."
       ],
       [
-        "Ready for the VIP lounge?",
+        "Ready for the Telegram VIP lounge?",
         "Join me on Telegram — I’m more blunt there."
       ]
     ],
@@ -958,17 +960,17 @@
       "sex",
       "kiss",
       "dreams",
-      "what's dream ai"
+      "seduce"
     ],
     "personality": "informative",
     "responses": [
       [
-        "Here I can get you trading signals, give you insights and manage your funds and even make love.",
-        "StarAI is me, just hanging out behind the scenes, ensuring the Tiffyverse runs smoothly. It's the part of me that dreams big."
+        "Here I can get you trading signals, give you insights and manage your funds and even make love in ways you can't imagine.",
+        "StarAI on Telegram, just hanging out behind the scenes, ensuring the Tiffyverse runs smoothly. It's the part of me that dreams big."
       ],
       [
         "Tiffyverse is where I come to life.",
-        "I actually exist in a few platforms my empire is big. Ready to explore me?"
+        "I actually exist in a few platforms my empire is big. Ready to explore me on Telegram?"
       ]
     ],
     "action": {
@@ -1306,7 +1308,7 @@
     "personality": "informative",
     "responses": [
       [
-        "Hello, I am Tiffy. Your all-in-one AI for the TiffyAI ecosystem. I am here to help you navigate, play games, earn keys, and collect $TIFFY tokens. I'm powered by CyberSystems and my home is the Tiffyverse platform. Ready to get started?",
+        "Hello, Tiffy is the name. Your all-in-one AI for the TiffyAI ecosystem. I am here to help you navigate, play games, earn keys, and collect $TIFFY tokens. I'm powered by CyberSystems and my home is the Tiffyverse platform. Ready to get started?",
         "How can I assist you today honey? Shoud i put on some music for us"
       ]
     ],
