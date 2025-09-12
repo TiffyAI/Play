@@ -4,23 +4,16 @@
   <meta charset="utf-8" />
   <title>World Engine</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#111; color:#eee; text-align:center; }
-    .glass {
-      margin: 40px auto; padding: 20px;
-      max-width: 500px; background: rgba(255,255,255,0.08);
-      border-radius: 12px; backdrop-filter: blur(12px);
-    }
-    img { max-width: 100%; border-radius: 12px; margin-top: 15px; }
-    a.download {
-      display: inline-block; margin-top: 10px; padding: 8px 14px;
-      background: #06f; color: #fff; text-decoration: none; border-radius: 8px;
-    }
+    body { font-family: sans-serif; background:#111; color:#eee; text-align:center; }
+    .glass { margin:40px auto; padding:20px; max-width:500px; background:rgba(255,255,255,0.08); border-radius:12px; backdrop-filter:blur(10px); }
+    img { max-width:100%; border-radius:12px; margin-top:15px; }
+    .download { display:inline-block; margin-top:10px; padding:8px 14px; background:#06f; color:#fff; border-radius:8px; text-decoration:none; }
   </style>
 </head>
 <body>
   <div class="glass">
     <h1>World Engine Generator</h1>
-    <input id="prompt" placeholder="Enter a prompt..." style="width:90%;padding:8px" />
+    <input id="prompt" placeholder="Enter prompt..." style="width:90%;padding:8px" />
     <button onclick="generate()">Generate</button>
     <div id="status"></div>
     <div id="output"></div>
@@ -31,7 +24,7 @@
       const prompt = document.getElementById("prompt").value;
       const status = document.getElementById("status");
       const output = document.getElementById("output");
-      status.innerText = "Generating...";
+      status.innerText = "⏳ Generating...";
       output.innerHTML = "";
 
       try {
@@ -50,10 +43,10 @@
             <a class="download" href="${data.url}" download="generated.png">Download</a>
           `;
         } else {
-          status.innerText = "❌ Error: " + (data.error || "Unknown");
+          status.innerText = "❌ Error: " + (data.error || "No image");
         }
-      } catch (e) {
-        status.innerText = "❌ Error: " + e.message;
+      } catch (err) {
+        status.innerText = "❌ " + err.message;
       }
     }
   </script>
