@@ -2,6 +2,34 @@
 <html>
 <head>
   <title>TiffyAI Interface</title>
+  <!-- 🌟 PWA setup -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2196f3">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").then(reg => {
+        console.log("Service Worker registered:", reg);
+
+        // Auto-update if a new version is found
+        reg.addEventListener("updatefound", () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener("statechange", () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              console.log("New version available — reloading…");
+              window.location.reload();
+            }
+          });
+        });
+      }).catch(err => console.error("SW registration failed:", err));
+    }
+  </script>
+  <!-- 🌟 End PWA setup -->
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <style>
     body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
