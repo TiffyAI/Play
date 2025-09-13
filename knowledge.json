@@ -137,24 +137,24 @@
   },
   {
     "keywords": [
-      "pancake",
-      "pancakeswap",
+      "trading",
+      "dextools",
       "dex",
       "trade"
     ],
     "personality": "direct",
     "responses": [
       [
-        "You want to get straight to the action? PancakeSwap is where you can trade TIFFY.",
+        "You want to get straight to the action? Dextools is where you can trade TIFFY.",
         "Just a heads-up, the presale price is better right now, but I can send you to the DEX."
       ],
       [
-        "Ready to trade? I’ll open the PancakeSwap page for you. Get your BNB ready!"
+        "Ready to trade? I’ll open the Dextools page for you. Get your BNB ready!"
       ]
     ],
     "action": {
       "type": "link",
-      "url": "https://pancakeswap.finance/swap?outputCurrency=0xE488253DD6B4D31431142F1b7601C96f24Fb7dd5"
+      "url": "https://www.dextools.io/app/en/bnb/pair-explorer/0x1305302Ef3929DD9252b051077e4ca182107F00D?t=1757771691287"
     },
     "contextual": false,
     "memoryUsage": null
