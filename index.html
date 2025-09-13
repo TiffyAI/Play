@@ -28,30 +28,6 @@
     }
   </script>
   <!-- ✅ End PWA setup -->
-
-  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <style>
-    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-    <script>
-  window.addEventListener("load", () => {
-    const splash = document.getElementById("loadingScreen");
-    const splashImg = document.getElementById("tiffyFace");
-
-    // Step 1: Start with the TiffyAI token logo
-    splashImg.src = "TiffyAI-Token.png";
-
-    // Step 2: After 1.5s, switch to Tiffy's face
-    setTimeout(() => {
-      splashImg.src = "face.png";
-    }, 1500);
-
-    // Step 3: Fade out the splash after 3s total
-    setTimeout(() => {
-      splash.classList.add("fadeOut");
-    }, 3000);
-  });
-</script>
-
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <style>
     body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
