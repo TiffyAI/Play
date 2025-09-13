@@ -29,30 +29,31 @@
   </script>
   <!-- ✅ End PWA setup -->
 
+  <!-- ✅ A-Frame -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <style>
-    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-    <script>
-  window.addEventListener("load", () => {
-    const splash = document.getElementById("loadingScreen");
-    const splashImg = document.getElementById("tiffyFace");
 
-    // Step 1: Start with the TiffyAI token logo
-    splashImg.src = "TiffyAI-Token.png";
+  <!-- ✅ Splash Screen Control -->
+  <script>
+    window.addEventListener("load", () => {
+      const splash = document.getElementById("loadingScreen");
+      const splashImg = document.getElementById("tiffyFace");
 
-    // Step 2: After 1.5s, switch to Tiffy's face
-    setTimeout(() => {
-      splashImg.src = "face.png";
-    }, 1500);
+      // Step 1: Start with the TiffyAI token logo
+      splashImg.src = "TiffyAI-Token.png";
 
-    // Step 3: Fade out the splash after 3s total
-    setTimeout(() => {
-      splash.classList.add("fadeOut");
-    }, 3000);
-  });
-</script>
+      // Step 2: After 1.5s, switch to Tiffy's face
+      setTimeout(() => {
+        splashImg.src = "face.png";
+      }, 1500);
 
-  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+      // Step 3: Fade out the splash after 3s total
+      setTimeout(() => {
+        splash.classList.add("fadeOut");
+      }, 3000);
+    });
+  </script>
+
+  <!-- ✅ Styles -->
   <style>
     body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
 
@@ -68,7 +69,11 @@
       align-items:center;
       justify-content:center;
       z-index:20000;
-      transition: opacity 1s ease;
+      transition: opacity 1s ease, visibility 1s ease;
+    }
+    #loadingScreen.fadeOut {
+      opacity: 0;
+      visibility: hidden;
     }
     #loadingScreen img {
       width:200px;
@@ -194,6 +199,7 @@
     .hidden { display: none; }
   </style>
 </head>
+
 <body>
   <!-- Loading screen -->
 <div id="loadingScreen">
