@@ -2,7 +2,7 @@
   "name": "TiffyAI Portal",
   "short_name": "TiffyAI",
   "description": "Your AI guide to blockchain, games, and creative tools.",
-  "start_url": "/index.html",
+  "start_url": "https://tiffyai.github.io/Play/index.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#00f0ff",
