@@ -2,6 +2,13 @@ const express = require("express");
 const fetch = require("node-fetch");
 const app = express();
 
+// Enable CORS for mobile clients
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 app.get("/api/count", async (req, res) => {
   try {
     const workspaceKey = process.env.COUNTERAPI_KEY; // From Render environment
