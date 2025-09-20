@@ -981,89 +981,104 @@
       }
     };
 
-    // State & Memory
-    let selectedVoice = null;
-    let voiceReady = false;
-    let userName = localStorage.getItem("tiffyUserName") || "";
-    let history = JSON.parse(localStorage.getItem("tiffyMemory") || "[]");
-    let lastBotClaim = localStorage.getItem("tiffyLastClaim") || "";
-    function saveMemory() { localStorage.setItem("tiffyMemory", JSON.stringify(history)); }
-    function saveClaim(txt) { lastBotClaim = txt || ""; localStorage.setItem("tiffyLastClaim", lastBotClaim); }
+<script>
+// State & Memory
+let selectedVoice = null;
+let voiceReady = false;
+let userName = localStorage.getItem("tiffyUserName") || "";
+console.log("Initial load: userName from localStorage =", userName); // Debug log
+let history = JSON.parse(localStorage.getItem("tiffyMemory") || "[]");
+let lastBotClaim = localStorage.getItem("tiffyLastClaim") || "";
+function saveMemory() { localStorage.setItem("tiffyMemory", JSON.stringify(history)); }
+function saveClaim(txt) { lastBotClaim = txt || ""; localStorage.setItem("tiffyLastClaim", lastBotClaim); }
 
-    const CTX_KEY = "tiffyLastContext";
-    let lastContext = (() => {
-      try { return JSON.parse(localStorage.getItem(CTX_KEY) || "{}") || {}; }
-      catch { return {}; }
-    })();
-    function saveContext() {
-      localStorage.setItem(CTX_KEY, JSON.stringify(lastContext || {}));
+const CTX_KEY = "tiffyLastContext";
+let lastContext = (() => {
+  try { return JSON.parse(localStorage.getItem(CTX_KEY) || "{}") || {}; }
+  catch { return {}; }
+})();
+function saveContext() {
+  localStorage.setItem(CTX_KEY, JSON.stringify(lastContext || {}));
+}
+function setContext(patch = {}) {
+  lastContext = { ...(lastContext || {}), ...patch };
+  saveContext();
+}
+
+function nickname(name) {
+  if (!name) return "friend";
+  if (Math.random() < 0.33) return name + "ey";
+  return name;
+}
+
+// Voice setup
+function speak(text, cb) {
+  if (!text) return;
+  const utter = new SpeechSynthesisUtterance(text);
+  if (selectedVoice) utter.voice = selectedVoice;
+  utter.onend = () => { if (cb) cb(); };
+  try { speechSynthesis.speak(utter); } catch(e){}
+}
+
+// Load stored name into input on page load
+window.addEventListener("load", () => {
+  const nameInput = document.getElementById("userName");
+  if (nameInput && userName) {
+    nameInput.value = userName;
+    nameInput.style.display = "none";
+    document.getElementById("changeName").style.display = "inline-block";
+  }
+});
+
+// Start button
+document.getElementById("startTiffy").addEventListener("click", () => {
+  const nameEl = document.getElementById("userName");
+  const typed = (nameEl && nameEl.value) ? nameEl.value.trim() : "";
+  if (typed) {
+    userName = typed;
+    localStorage.setItem("tiffyUserName", userName);
+    console.log("Name saved to localStorage:", userName); // Debug log
+    nameEl.style.display = "none";
+    document.getElementById("changeName").style.display = "inline-block";
+  }
+
+  const voices = speechSynthesis.getVoices();
+  const select = document.getElementById("voiceSelect");
+  if (voices && voices.length > 0 && select.selectedIndex >= 0) {
+    selectedVoice = voices[select.selectedIndex];
+  } else {
+    selectedVoice = null;
+  }
+  voiceReady = true;
+
+  const greet = greetings[Math.floor(Math.random() * greetings.length)];
+  const pickName = userName ? nickname(userName) : null;
+  const introLine = userName
+    ? `${greet} Hello ${pickName}, I’ll guide you through the ecosystem.`
+    : "Hey, I’d love to know your name so I can guide you better. Please type it in the name box above and press Start again.";
+
+  speak(introLine, () => {
+    if (userName) {
+      setTimeout(() => {
+        document.getElementById("loadingScreen").style.opacity = "0";
+        setTimeout(() => {
+          document.getElementById("loadingScreen").style.display = "none";
+          document.getElementById("chatPanel").style.display = "flex";
+        }, 800);
+      }, 600);
+      history.push({ role: "tiffy", text: introLine });
+      saveMemory();
     }
-    function setContext(patch = {}) {
-      lastContext = { ...(lastContext || {}), ...patch };
-      saveContext();
-    }
+  });
+});
 
-    function nickname(name) {
-      if (!name) return "friend";
-      if (Math.random() < 0.33) return name + "ey";
-      return name;
-    }
-
-    // Voice setup
-    function speak(text, cb) {
-      if (!text) return;
-      const utter = new SpeechSynthesisUtterance(text);
-      if (selectedVoice) utter.voice = selectedVoice;
-      utter.onend = () => { if (cb) cb(); };
-      try { speechSynthesis.speak(utter); } catch(e){}
-    }
-
-    // Start button
-    document.getElementById("startTiffy").addEventListener("click", () => {
-      const nameEl = document.getElementById("userName");
-      const typed = (nameEl && nameEl.value) ? nameEl.value.trim() : "";
-      if (typed) {
-        userName = typed;
-        localStorage.setItem("tiffyUserName", userName);
-        nameEl.style.display = "none";
-        document.getElementById("changeName").style.display = "inline-block";
-      }
-
-      const voices = speechSynthesis.getVoices();
-      const select = document.getElementById("voiceSelect");
-      if (voices && voices.length > 0 && select.selectedIndex >= 0) {
-        selectedVoice = voices[select.selectedIndex];
-      } else {
-        selectedVoice = null;
-      }
-      voiceReady = true;
-
-      const greet = greetings[Math.floor(Math.random() * greetings.length)];
-      const pickName = userName ? nickname(userName) : null;
-      const introLine = userName
-        ? `${greet} Hello ${pickName}, I’ll guide you through the ecosystem.`
-        : "Hey, I’d love to know your name so I can guide you better. Please type it in the name box above and press Start again.";
-
-      speak(introLine, () => {
-        if (userName) {
-          setTimeout(() => {
-            document.getElementById("loadingScreen").style.opacity = "0";
-            setTimeout(() => {
-              document.getElementById("loadingScreen").style.display = "none";
-              document.getElementById("chatPanel").style.display = "flex";
-            }, 800);
-          }, 600);
-          history.push({ role: "tiffy", text: introLine });
-          saveMemory();
-        }
-      });
-    });
-
-    document.getElementById("changeName").addEventListener("click", () => {
-      document.getElementById("userName").style.display = "inline-block";
-      document.getElementById("userName").value = userName || "";
-      document.getElementById("changeName").style.display = "none";
-    });
+document.getElementById("changeName").addEventListener("click", () => {
+  const nameInput = document.getElementById("userName");
+  nameInput.style.display = "inline-block";
+  nameInput.value = userName || "";
+  document.getElementById("changeName").style.display = "none";
+});
+</script>
 
     // Counter setup
     window.addEventListener("load", () => {
