@@ -1545,5 +1545,27 @@ if (userName) {
 initKnowledge();
 loadBrainstorm();
     </script>
+  <script>
+  // Run counter after app loads, no freeze risk
+  window.addEventListener("load", async () => {
+    let userId = localStorage.getItem("tiffyUserId");
+    if (!userId) {
+      userId = `user_${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      localStorage.setItem("tiffyUserId", userId);
+    }
+    try {
+      await fetch("https://world-engine-7x75.onrender.com/api/track-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId })
+      });
+      const res = await fetch("https://world-engine-7x75.onrender.com/api/unique-users");
+      const data = await res.json();
+      document.getElementById("appUserCount").textContent = data.count || 0;
+    } catch (e) {
+      // Silent fail - don't crash
+    }
+  });
+</script>
 </body>
 </html>
