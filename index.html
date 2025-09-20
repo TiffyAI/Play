@@ -238,19 +238,6 @@
     }
   });
 
-  // CounterAPI integration
-  document.addEventListener("DOMContentLoaded", async () => {
-    try {
-      const response = await fetch("https://world-engine-7x75.onrender.com/api/count");
-      const result = await response.json();
-      const userCountElement = document.getElementById("userCount");
-      if (userCountElement) {
-        userCountElement.textContent = result.count || 0;
-      }
-    } catch (error) {
-      console.error("Failed to increment user count:", error);
-    }
-  });
 </script>
 
 <!-- Glass interface -->
