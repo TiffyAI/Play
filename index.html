@@ -982,224 +982,140 @@
     };
 
      <script>
-// State & Memory
+
+/***********************
+ * State & Memory
+ ***********************/
 let selectedVoice = null;
 let voiceReady = false;
-let userName = "";
-try {
-  userName = localStorage.getItem("tiffyUserName") || "";
-  console.log("Initial load: userName from localStorage =", userName); // Debug log
-} catch (e) {
-  console.error("Error loading tiffyUserName from localStorage:", e);
-}
-let history = [];
-try {
-  history = JSON.parse(localStorage.getItem("tiffyMemory") || "[]");
-  console.log("Initial load: history from localStorage =", history.length, "entries");
-} catch (e) {
-  console.error("Error loading tiffyMemory from localStorage:", e);
-}
-let lastBotClaim = "";
-try {
-  lastBotClaim = localStorage.getItem("tiffyLastClaim") || "";
-  console.log("Initial load: lastBotClaim from localStorage =", lastBotClaim);
-} catch (e) {
-  console.error("Error loading tiffyLastClaim from localStorage:", e);
-}
-const CTX_KEY = "tiffyLastContext";
-let lastContext = {};
-try {
-  lastContext = JSON.parse(localStorage.getItem(CTX_KEY) || "{}") || {};
-  console.log("Initial load: lastContext from localStorage =", lastContext);
-} catch (e) {
-  console.error("Error loading tiffyLastContext from localStorage:", e);
-}
+let userName = localStorage.getItem("tiffyUserName") || "";
 
-function saveMemory() {
-  try {
-    localStorage.setItem("tiffyMemory", JSON.stringify(history));
-    console.log("Saved history to localStorage:", history.length, "entries");
-  } catch (e) {
-    console.error("Error saving tiffyMemory to localStorage:", e);
-  }
-}
-function saveClaim(txt) {
-  try {
-    lastBotClaim = txt || "";
-    localStorage.setItem("tiffyLastClaim", lastBotClaim);
-    console.log("Saved lastBotClaim to localStorage:", lastBotClaim);
-  } catch (e) {
-    console.error("Error saving tiffyLastClaim to localStorage:", e);
-  }
-}
+// conversation memory + last bot claim for continuity
+let history = JSON.parse(localStorage.getItem("tiffyMemory") || "[]");
+let lastBotClaim = localStorage.getItem("tiffyLastClaim") || ""; // e.g., "new game: Starship TiffyAI"
+function saveMemory() { localStorage.setItem("tiffyMemory", JSON.stringify(history)); }
+function saveClaim(txt) { lastBotClaim = txt || ""; localStorage.setItem("tiffyLastClaim", lastBotClaim); }
+
+// conversation context for knowledge templates (kept small & explicit)
+const CTX_KEY = "tiffyLastContext";
+let lastContext = (() => {
+  try { return JSON.parse(localStorage.getItem(CTX_KEY) || "{}") || {}; }
+  catch { return {}; }
+})();
 function saveContext() {
-  try {
-    localStorage.setItem(CTX_KEY, JSON.stringify(lastContext || {}));
-    console.log("Saved lastContext to localStorage:", lastContext);
-  } catch (e) {
-    console.error("Error saving tiffyLastContext to localStorage:", e);
-  }
+  localStorage.setItem(CTX_KEY, JSON.stringify(lastContext || {}));
 }
 function setContext(patch = {}) {
   lastContext = { ...(lastContext || {}), ...patch };
   saveContext();
 }
 
+// nickname helper
 function nickname(name) {
   if (!name) return "friend";
   if (Math.random() < 0.33) return name + "ey";
   return name;
 }
 
-// Voice setup
+/***********************
+ * Voice setup (silent)
+ ***********************/
 function speak(text, cb) {
-  if (!text) {
-    console.warn("No text to speak");
-    if (cb) cb();
-    return;
-  }
+  if (!text) return;
   const utter = new SpeechSynthesisUtterance(text);
-  if (selectedVoice) {
-    utter.voice = selectedVoice;
-    console.log("Speaking with voice:", selectedVoice.name);
-  } else {
-    console.warn("No voice selected, using default");
-  }
-  utter.onend = () => {
-    tiffyStopTalking();
-    if (cb) cb();
-  };
-  utter.onerror = (e) => {
-    console.error("Speech synthesis error:", e);
-    tiffyStopTalking();
-    if (cb) cb();
-  };
-  tiffyStartTalking();
-  try {
-    speechSynthesis.speak(utter);
-  } catch (e) {
-    console.error("Error in speechSynthesis.speak:", e);
-    tiffyStopTalking();
-    if (cb) cb();
-  }
+  if (selectedVoice) utter.voice = selectedVoice;
+  utter.onend = () => { if (cb) cb(); };
+  try { speechSynthesis.speak(utter); } catch(e){}
 }
 
-// Populate voices
-function populateVoices() {
-  const select = document.getElementById("voiceSelect");
-  if (!select) {
-    console.error("voiceSelect element not found");
-    return;
-  }
-  select.innerHTML = "";
-  const voices = speechSynthesis.getVoices();
-  if (voices.length === 0) {
-    console.warn("No voices available yet");
-    return;
-  }
-  voices.forEach(v => {
-    const opt = document.createElement("option");
-    opt.value = v.name;
-    opt.textContent = `${v.name} (${v.lang})`;
-    select.appendChild(opt);
-  });
-  // Set default voice
-  if (voices.length > 0) {
-    selectedVoice = voices[0];
-    select.value = selectedVoice.name;
-    voiceReady = true;
-    console.log("Voices loaded, default voice:", selectedVoice.name);
-  }
-}
-
-// Handle async voice loading
-window.speechSynthesis.onvoiceschanged = () => {
-  console.log("Voices changed event triggered");
-  populateVoices();
-};
-window.addEventListener("load", () => {
-  console.log("Window loaded, attempting to populate voices");
-  populateVoices();
-});
-
-// Load stored name and initialize UI
-window.addEventListener("load", () => {
-  const nameInput = document.getElementById("userName");
-  const changeNameBtn = document.getElementById("changeName");
-  if (nameInput && userName) {
-    nameInput.value = userName;
-    nameInput.style.display = "none";
-    if (changeNameBtn) changeNameBtn.style.display = "inline-block";
-    console.log("Name input populated with:", userName);
-  } else {
-    console.log("No name in localStorage or nameInput not found");
-  }
-});
-
-// Start button
+/***********************
+ * Start button
+ ***********************/
 document.getElementById("startTiffy").addEventListener("click", () => {
-  console.log("Start button clicked");
   const nameEl = document.getElementById("userName");
   const typed = (nameEl && nameEl.value) ? nameEl.value.trim() : "";
   if (typed) {
     userName = typed;
-    try {
-      localStorage.setItem("tiffyUserName", userName);
-      console.log("Name saved to localStorage:", userName);
-    } catch (e) {
-      console.error("Error saving tiffyUserName to localStorage:", e);
-    }
+    localStorage.setItem("tiffyUserName", userName);
     nameEl.style.display = "none";
     document.getElementById("changeName").style.display = "inline-block";
   }
 
-  // Ensure voices are loaded
   const voices = speechSynthesis.getVoices();
   const select = document.getElementById("voiceSelect");
   if (voices && voices.length > 0 && select.selectedIndex >= 0) {
     selectedVoice = voices[select.selectedIndex];
-    voiceReady = true;
-    console.log("Voice selected:", selectedVoice.name);
   } else {
-    console.warn("No voices available, using default");
-    voiceReady = true;
+    selectedVoice = null;
   }
+  voiceReady = true;
 
   const greet = greetings[Math.floor(Math.random() * greetings.length)];
-  const pickName = userName ? nickname(userName) : "friend";
+  const pickName = userName ? nickname(userName) : null;
   const introLine = userName
     ? `${greet} Hello ${pickName}, I’ll guide you through the ecosystem.`
     : "Hey, I’d love to know your name so I can guide you better. Please type it in the name box above and press Start again.";
 
   speak(introLine, () => {
-    console.log("Speak completed, transitioning UI");
-    setTimeout(() => {
-      const loadingScreen = document.getElementById("loadingScreen");
-      const chatPanel = document.getElementById("chatPanel");
-      if (loadingScreen) loadingScreen.style.opacity = "0";
+    if (userName) {
       setTimeout(() => {
-        if (loadingScreen) loadingScreen.style.display = "none";
-        if (chatPanel) chatPanel.style.display = "flex";
-        console.log("UI transitioned to chat panel");
-      }, 800);
-      if (userName) {
-        history.push({ role: "tiffy", text: introLine });
-        saveMemory();
-      }
-    }, 600);
+        document.getElementById("loadingScreen").style.opacity = "0";
+        setTimeout(() => {
+          document.getElementById("loadingScreen").style.display = "none";
+          document.getElementById("chatPanel").style.display = "flex";
+        }, 800);
+      }, 600);
+      history.push({ role: "tiffy", text: introLine });
+      saveMemory();
+    }
   });
 });
 
-// Change name handler
 document.getElementById("changeName").addEventListener("click", () => {
-  console.log("Change name button clicked");
-  const nameInput = document.getElementById("userName");
-  if (nameInput) {
-    nameInput.style.display = "inline-block";
-    nameInput.value = userName || "";
-  }
+  document.getElementById("userName").style.display = "inline-block";
+  document.getElementById("userName").value = userName || "";
   document.getElementById("changeName").style.display = "none";
 });
+
+/***********************
+ * Speak helper
+ ***********************/
+function speak(text, onend) {
+  if (!text) return;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  if (selectedVoice) {
+    utterance.voice = selectedVoice;
+  }
+
+  // Animate Tiffy’s lips + visualization while speaking
+  utterance.onstart = () => {
+    tiffyTalking(true);
+    startVisualizer();
+    glowMessageBox(true);
+  };
+
+  // Reset face + visualization when done
+  utterance.onend = () => {
+    tiffyTalking(false);
+    stopVisualizer();
+    glowMessageBox(false);
+    if (onend) onend();
+  };
+
+  speechSynthesis.speak(utterance);
+}
+
+/***********************
+ * Face switcher
+ ***********************/
+function tiffyTalking(on) {
+  const face = document.getElementById("tiffyFace");
+  if (!face) return;
+  face.src = on ? "faceit.gif" : "face.png";
+}
+
+  
     // Counter setup
     window.addEventListener("load", () => {
       console.log("Counter script started");
